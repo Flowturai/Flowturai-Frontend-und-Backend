@@ -1,0 +1,116 @@
+# ============================================================
+# FLOWTURAI – Produktion
+# Backend API + Next.js Frontend + Traefik (SSL)
+#
+# Starten: docker compose -f docker-compose.prod.yml up -d
+# ============================================================
+
+services:
+
+  # ── Backend API (Express.js + Admin Dashboard) ─────────────
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: flowturai_api
+    restart: always
+    environment:
+      NODE_ENV:          production
+      ENVIRONMENT:       production
+      PORT:              3000
+      DATABASE_URL:      ${DATABASE_URL}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      IONOS_EMAIL:       ${IONOS_EMAIL}
+      IONOS_PASSWORD:    ${IONOS_PASSWORD}
+      IONOS_SMTP_HOST:   ${IONOS_SMTP_HOST:-smtp.ionos.de}
+      IONOS_SMTP_PORT:   ${IONOS_SMTP_PORT:-587}
+      ADMIN_EMAIL:       ${ADMIN_EMAIL}
+      ADMIN_SECRET_KEY:  ${ADMIN_SECRET_KEY}
+      DOMAIN:            ${DOMAIN}
+      BUSINESS_ADDRESS:  ${BUSINESS_ADDRESS}
+      BANK_HOLDER:       ${BANK_HOLDER}
+      BANK_IBAN:         ${BANK_IBAN}
+      BANK_BIC:          ${BANK_BIC}
+      BANK_NAME:         ${BANK_NAME:-FINOM Banking}
+      TWILIO_ACCOUNT_SID:   ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN:    ${TWILIO_AUTH_TOKEN}
+      TWILIO_WHATSAPP_FROM: ${TWILIO_WHATSAPP_FROM:-whatsapp:+14155238886}
+      TWILIO_WHATSAPP_TO:   ${TWILIO_WHATSAPP_TO}
+      BACKUP_DIR:        /backups
+      ALLOWED_ORIGINS:   https://${DOMAIN},https://www.${DOMAIN}
+    volumes:
+      - backups:/backups
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # HTTPS: /admin auf beiden Domains → backend (höhere Prio als Frontend)
+      - "traefik.http.routers.flowturai.rule=(Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)) && PathPrefix(`/admin`)"
+      - "traefik.http.routers.flowturai.entrypoints=websecure"
+      - "traefik.http.routers.flowturai.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.flowturai.priority=10"
+      - "traefik.http.services.flowturai.loadbalancer.server.port=3000"
+      # HTTP → HTTPS redirect für beide Domains (höhere Prio)
+      - "traefik.http.routers.flowturai-http.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
+      - "traefik.http.routers.flowturai-http.entrypoints=web"
+      - "traefik.http.routers.flowturai-http.middlewares=redirect-https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+
+  # ── Next.js Frontend (flowturai.de + www.flowturai.de) ─────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: flowturai_frontend
+    restart: always
+    environment:
+      NODE_ENV:    production
+      PORT:        3001
+      HOSTNAME:    "0.0.0.0"
+      # Internal Docker network URL for API proxying
+      BACKEND_URL: http://flowturai_api:3000
+    depends_on:
+      - api
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      # HTTPS: flowturai.de + www.flowturai.de → Next.js frontend (niedrigere Prio als /admin)
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.frontend.priority=1"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3001"
+
+  # ── Traefik Reverse Proxy + SSL ────────────────────────────
+  traefik:
+    image: traefik:v3.1
+    container_name: flowturai_traefik
+    restart: always
+    command:
+      - "--api.dashboard=false"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ADMIN_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    networks:
+      - web
+
+volumes:
+  backups:
+  letsencrypt:
+
+networks:
+  web:
+    driver: bridge

@@ -1,0 +1,92 @@
+services:
+
+  # ── PostgreSQL (Hetzner Volume = deutsches Rechenzentrum) ────
+  db:
+    image: postgres:16-alpine
+    container_name: flowturai_db
+    restart: always
+    environment:
+      POSTGRES_DB:       flowturai
+      POSTGRES_USER:     flowturai
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowturai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  # ── Flowturai API ────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flowturai_api
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV:          production
+      ENVIRONMENT:       production
+      PORT:              3000
+      DATABASE_URL:      postgresql://flowturai:${DB_PASSWORD}@db:5432/flowturai
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      IONOS_EMAIL:       ${IONOS_EMAIL}
+      IONOS_PASSWORD:    ${IONOS_PASSWORD}
+      IONOS_SMTP_HOST:   ${IONOS_SMTP_HOST:-smtp.ionos.de}
+      IONOS_SMTP_PORT:   ${IONOS_SMTP_PORT:-587}
+      ADMIN_EMAIL:       ${ADMIN_EMAIL}
+      ADMIN_SECRET_KEY:  ${ADMIN_SECRET_KEY}
+      DOMAIN:            ${DOMAIN}
+      BUSINESS_ADDRESS:  ${BUSINESS_ADDRESS}
+      BANK_HOLDER:       ${BANK_HOLDER}
+      BANK_IBAN:         ${BANK_IBAN}
+      BANK_BIC:          ${BANK_BIC}
+      BACKUP_DIR:        /backups
+      ALLOWED_ORIGINS:   https://${DOMAIN}
+    volumes:
+      - backups:/backups
+    networks:
+      - internal
+      - external
+
+  # ── Nginx (Reverse Proxy + SSL) ──────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: flowturai_nginx
+    restart: always
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    networks:
+      - external
+
+  # ── Certbot (SSL – Let's Encrypt) ────────────────────────────
+  certbot:
+    image: certbot/certbot:latest
+    container_name: flowturai_certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done'"
+
+volumes:
+  pgdata:
+  backups:
+
+networks:
+  internal:
+    driver: bridge
+  external:
+    driver: bridge

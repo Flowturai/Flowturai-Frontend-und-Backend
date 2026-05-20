@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cmd /c \"dir /s /b \"\"C:\\\\Users\\\\User\\\\Documents\\\\Flowturai\\\\Flowturai\\\\Frontend Flowturai\\\\.agents\"\"\")"
+    ]
+  }
+}

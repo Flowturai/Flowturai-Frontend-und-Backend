@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-heading: "Lexend", sans-serif;
+  --font-body: "Source Sans 3", sans-serif;
+  --color-accent: #c6e2ff;
+  --color-blue: #2563EB;
+  --color-blue-dark: #1E40AF;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  color: #374151;
+  background-color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    color: #0F172A;
+  }
+}
+
+@layer utilities {
+  .dot-grid {
+    background-image: radial-gradient(circle at 1px 1px, rgba(198,226,255,0.55) 1px, transparent 0);
+    background-size: 28px 28px;
+  }
+  .section-padding   { @apply py-20 sm:py-28; }
+  .container-wide    { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
+  .section-title     { @apply font-heading text-4xl sm:text-5xl font-extrabold text-slate-900 leading-tight tracking-tighter; }
+  .section-subtitle  { @apply text-lg text-slate-600 leading-relaxed; }
+
+  .section-label {
+    @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-4 text-xs font-semibold uppercase tracking-wider;
+    background-color: #c6e2ff;
+    border: 1px solid rgba(37,99,235,0.25);
+    color: #1E40AF;
+  }
+}
+
+/* ── Hero animations ── */
+@keyframes hero-fade-in-down {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes hero-fade-in-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes gradient-shift {
+  0%,100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+@keyframes float {
+  0%,100% { transform: translateY(0px); }
+  50%      { transform: translateY(-10px); }
+}
+
+.hero-fade-down { animation: hero-fade-in-down 0.8s ease-out forwards; }
+.hero-fade-up   { animation: hero-fade-in-up  0.8s ease-out forwards; opacity: 0; }
+.hero-delay-200 { animation-delay: 0.2s; }
+.hero-delay-400 { animation-delay: 0.4s; }
+.hero-delay-600 { animation-delay: 0.6s; }
+.hero-delay-800 { animation-delay: 0.8s; }
+.hero-gradient-text { background-size: 200% 200%; animation: gradient-shift 4s ease infinite; }
+
+/* ── Hero shimmer / Glanz effects ── */
+@keyframes shimmer-move {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes shimmer-border {
+  0%, 100% { border-color: rgba(198,226,255,0.35); }
+  50%       { border-color: rgba(255,255,255,0.65); }
+}
+
+/* Shimmering gradient text — badge */
+.hero-shimmer-text {
+  background: linear-gradient(
+    90deg,
+    #c6e2ff 0%,
+    #ffffff 30%,
+    #e0f0ff 50%,
+    #ffffff 70%,
+    #c6e2ff 100%
+  );
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer-move 3.5s linear infinite;
+}
+
+/* Soft single-layer text luminance for subtitle / stats */
+.hero-glow-soft {
+  text-shadow: 0 1px 12px rgba(198,226,255,0.45);
+}
+
+/* Badge border shimmer */
+.hero-badge-glow {
+  animation: shimmer-border 3s ease-in-out infinite;
+}

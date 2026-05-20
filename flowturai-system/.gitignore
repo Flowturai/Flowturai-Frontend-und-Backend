@@ -1,0 +1,21 @@
+﻿# AbhÃ¤ngigkeiten
+node_modules/
+
+# Umgebungsvariablen (NIEMALS committen!)
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+logs/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build-Ausgaben
+dist/
+build/

@@ -1,0 +1,80 @@
+services:
+
+  db_staging:
+    image: postgres:16-alpine
+    container_name: flowturai_db_staging
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       flowturai_staging
+      POSTGRES_USER:     flowturai
+      POSTGRES_PASSWORD: ${DB_PASSWORD_STAGING:-staging_pw_hier_aendern}
+    volumes:
+      - pgdata_staging:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowturai"]
+      interval: 10s
+      retries: 5
+    networks:
+      - staging_net
+    ports:
+      - "5433:5432"  # Anderer Port – kein Konflikt mit Production
+
+  api_staging:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flowturai_api_staging
+    restart: unless-stopped
+    depends_on:
+      db_staging:
+        condition: service_healthy
+    environment:
+      NODE_ENV:          staging
+      ENVIRONMENT:       staging
+      PORT:              3001
+      DATABASE_URL:      postgresql://flowturai:${DB_PASSWORD_STAGING:-staging_pw_hier_aendern}@db_staging:5432/flowturai_staging
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      IONOS_EMAIL:       ${IONOS_EMAIL}
+      IONOS_PASSWORD:    ${IONOS_PASSWORD}
+      IONOS_SMTP_HOST:   ${IONOS_SMTP_HOST:-smtp.ionos.de}
+      IONOS_SMTP_PORT:   ${IONOS_SMTP_PORT:-587}
+      ADMIN_EMAIL:       ${ADMIN_EMAIL}
+      ADMIN_SECRET_KEY:  ${ADMIN_SECRET_KEY_STAGING:-staging-key-hier-aendern}
+      DOMAIN:            staging.${DOMAIN}
+      BUSINESS_ADDRESS:  ${BUSINESS_ADDRESS}
+      BANK_HOLDER:       ${BANK_HOLDER}
+      BANK_IBAN:         ${BANK_IBAN}
+      BANK_BIC:          ${BANK_BIC}
+      BACKUP_DIR:        /backups_staging
+      ALLOWED_ORIGINS:   https://staging.${DOMAIN},http://localhost:1420
+    volumes:
+      - backups_staging:/backups_staging
+    ports:
+      - "3001:3001"
+    networks:
+      - staging_net
+      - external_staging
+
+  nginx_staging:
+    image: nginx:1.27-alpine
+    container_name: flowturai_nginx_staging
+    restart: unless-stopped
+    depends_on:
+      - api_staging
+    ports:
+      - "8080:80"   # staging.domain.de auf Port 8080 → Nginx leitet intern weiter
+    volumes:
+      - ./nginx/nginx.staging.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - external_staging
+
+volumes:
+  pgdata_staging:
+  backups_staging:
+
+networks:
+  staging_net:
+    driver: bridge
+  external_staging:
+    driver: bridge

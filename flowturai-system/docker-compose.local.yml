@@ -1,0 +1,67 @@
+# ============================================================
+# FLOWTURAI – Lokaler Start (kein SSL, kein Nginx)
+# Nur für lokales Testen auf deinem eigenen Rechner
+# Starten: docker compose -f docker-compose.local.yml up
+# Dashboard: http://localhost:3000
+# ============================================================
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: flowturai_db_local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       flowturai
+      POSTGRES_USER:     flowturai
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata_local:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./sql/accounting_additions.sql:/docker-entrypoint-initdb.d/02_accounting.sql:ro
+      - ./sql/sequences_and_storno.sql:/docker-entrypoint-initdb.d/03_sequences.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flowturai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flowturai_api_local
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV:          development
+      ENVIRONMENT:       local
+      PORT:              3000
+      DATABASE_URL:      postgresql://flowturai:${DB_PASSWORD}@db:5432/flowturai
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      IONOS_EMAIL:       ${IONOS_EMAIL:-test@example.com}
+      IONOS_PASSWORD:    ${IONOS_PASSWORD:-placeholder}
+      IONOS_SMTP_HOST:   ${IONOS_SMTP_HOST:-smtp.ionos.de}
+      IONOS_SMTP_PORT:   ${IONOS_SMTP_PORT:-587}
+      ADMIN_EMAIL:       ${ADMIN_EMAIL:-admin@example.com}
+      ADMIN_SECRET_KEY:  ${ADMIN_SECRET_KEY}
+      DOMAIN:            localhost
+      BUSINESS_ADDRESS:  ${BUSINESS_ADDRESS:-Musterstrasse 1, 12345 Musterstadt}
+      BANK_HOLDER:       ${BANK_HOLDER:-Jeremy Jung}
+      BANK_IBAN:         ${BANK_IBAN:-DE00 0000 0000 0000 0000 00}
+      BANK_BIC:          ${BANK_BIC:-XXXXXXXX}
+      BACKUP_DIR:        /backups
+      ALLOWED_ORIGINS:   http://localhost:3000
+      LOG_REQUESTS:      "true"
+    ports:
+      - "3000:3000"
+    volumes:
+      - backups_local:/backups
+
+volumes:
+  pgdata_local:
+  backups_local:

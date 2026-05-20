@@ -1,0 +1,2267 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flowturai – Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      /* ── Flowturai Brand Colors ── */
+      --dark:   #0D2137;   /* Tiefes Navy   – Sidebar, Header   */
+      --dark2:  #0a1a2e;   /* Dunkleres Navy – Hover-States      */
+      --accent: #00C896;   /* Smaragdgrün   – CTAs, aktiv        */
+      --cyan:   #00A8E8;   /* Helles Cyan   – Links, Highlights  */
+      --bg:     #F5F7FA;   /* Off-White     – Seitenhintergrund  */
+      --white:  #ffffff;
+      --text:   #1C1C1E;   /* Anthrazit     – Fließtext          */
+      --gray:   #6b7280;
+      --border: #dde3ec;
+      --red:    #e53935;
+      --yellow: #f59e0b;
+      /* Aliase für Kompatibilität */
+      --blue:   #00C896;
+      --blue-l: #00A8E8;
+      --green:  #00C896;
+    }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+
+    /* ── Accounting ──────────────────────────────────────── */
+    .acc-positive { color:#006b4f; font-weight:700; }
+    .acc-negative { color:#991b1b; font-weight:700; }
+    .acc-neutral  { color:var(--gray); }
+
+    /* ── Staging Banner ──────────────────────────────────── */
+    #staging-banner {
+      display:none; background:#f59e0b; color:#1C1C1E; text-align:center;
+      padding:8px; font-size:13px; font-weight:700; letter-spacing:.03em;
+      position:fixed; top:0; left:0; right:0; z-index:999;
+    }
+    #staging-banner a { color:#0D2137; text-decoration:underline; cursor:pointer; }
+    body.is-staging { padding-top:36px; }
+    body.is-staging .sidebar { top:36px; }
+
+    /* ── Login ───────────────────────────────────────────── */
+    #login-screen {
+      display:flex; align-items:center; justify-content:center;
+      min-height:100vh; background:var(--dark);
+    }
+    .login-box {
+      background:#0a1a2e; border:1px solid #1a3a5c; border-radius:16px;
+      padding:48px 40px; width:380px; text-align:center;
+    }
+    .login-box h1 { color:#F5F7FA; font-size:26px; margin-bottom:6px; letter-spacing:-.5px; }
+    .login-box p  { color:var(--gray); font-size:13px; margin-bottom:28px; }
+    .login-input {
+      width:100%; padding:12px 16px; background:#0D2137; border:1px solid #1a3a5c;
+      border-radius:8px; color:#F5F7FA; font-size:15px; outline:none; margin-bottom:10px;
+    }
+    .login-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,200,150,.15); }
+    .login-hint { color:var(--gray); font-size:12px; margin-bottom:16px; }
+    .btn-primary {
+      width:100%; padding:12px; background:var(--accent); color:#0D2137; border:none;
+      border-radius:8px; font-size:15px; font-weight:700; cursor:pointer; transition:all .15s;
+      letter-spacing:.02em;
+    }
+    .btn-primary:hover { background:#00b386; transform:translateY(-1px); box-shadow:0 4px 14px rgba(0,200,150,.35); }
+    #login-error { color:#fca5a5; font-size:13px; margin-top:10px; display:none; }
+
+    /* ── App ─────────────────────────────────────────────── */
+    #app { display:none; }
+    .sidebar {
+      position:fixed; top:0; left:0; width:224px; height:100vh;
+      background:var(--dark); display:flex; flex-direction:column; z-index:100;
+    }
+    .sidebar-logo { padding:24px 20px 18px; border-bottom:1px solid rgba(255,255,255,.07); }
+    .sidebar-logo span { font-size:21px; font-weight:800; color:#F5F7FA; letter-spacing:-.5px; }
+    .sidebar-logo .logo-dot { color:var(--accent); }
+    .sidebar-logo small { display:block; font-size:11px; color:#6b7280; margin-top:3px; }
+    .sidebar nav { flex:1; padding:14px 10px; }
+    .nav-item {
+      display:flex; align-items:center; gap:10px; padding:10px 13px;
+      border-radius:8px; color:#8ea5b8; font-size:14px; cursor:pointer;
+      transition:all .15s; margin-bottom:2px; user-select:none;
+    }
+    .nav-item:hover { background:rgba(255,255,255,.06); color:#F5F7FA; }
+    .nav-item.active { background:var(--accent); color:#0D2137; font-weight:600; }
+    .sidebar-footer { padding:14px 20px; border-top:1px solid rgba(255,255,255,.07); }
+    .sidebar-footer p { color:#4b5a6b; font-size:11px; }
+
+    .main { margin-left:224px; min-height:100vh; }
+    .topbar {
+      background:var(--white); border-bottom:1px solid var(--border);
+      padding:0 28px; height:58px; display:flex; align-items:center;
+      justify-content:space-between; position:sticky; top:0; z-index:50;
+      box-shadow:0 1px 3px rgba(13,33,55,.06);
+    }
+    .topbar h2 { font-size:17px; font-weight:700; color:var(--dark); }
+    .topbar-right { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--gray); }
+    .dot-green { width:8px; height:8px; background:var(--accent); border-radius:50%; box-shadow:0 0 0 3px rgba(0,200,150,.2); }
+    .content { padding:26px 28px; }
+    .page { display:none; }
+    .page.active { display:block; }
+
+    /* ── Stats ───────────────────────────────────────────── */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(155px,1fr)); gap:14px; margin-bottom:24px; }
+    .stat-card {
+      background:var(--white); border:1px solid var(--border); border-radius:12px;
+      padding:18px 20px; position:relative; overflow:hidden;
+      transition:box-shadow .2s;
+    }
+    .stat-card:hover { box-shadow:0 4px 16px rgba(13,33,55,.08); }
+    .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--c,var(--accent)); }
+    .stat-label { font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+    .stat-value { font-size:30px; font-weight:800; color:var(--dark); margin-top:5px; line-height:1; }
+    .stat-sub   { font-size:12px; color:var(--gray); margin-top:3px; }
+
+    /* ── Charts ──────────────────────────────────────────── */
+    .charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:24px; }
+    .chart-card {
+      background:var(--white); border:1px solid var(--border); border-radius:12px; padding:20px;
+    }
+    .chart-card h4 { font-size:13px; font-weight:600; color:var(--dark); margin-bottom:16px; }
+    .chart-wrap { position:relative; height:200px; }
+    @media (max-width:900px) { .charts-grid { grid-template-columns:1fr; } }
+
+    /* ── Funnel ──────────────────────────────────────────── */
+    .funnel-row { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .funnel-label { font-size:12px; color:var(--gray); width:100px; flex-shrink:0; }
+    .funnel-bar-wrap { flex:1; background:var(--bg); border-radius:4px; height:22px; overflow:hidden; }
+    .funnel-bar { height:100%; border-radius:4px; transition:width .5s ease; display:flex; align-items:center; padding-left:8px; }
+    .funnel-bar span { font-size:11px; color:#fff; font-weight:600; }
+    .funnel-count { font-size:12px; font-weight:600; color:var(--dark); width:28px; text-align:right; }
+
+    /* ── Table ───────────────────────────────────────────── */
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+    .section-header h3 { font-size:15px; font-weight:600; }
+    .table-wrap { background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:24px; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:var(--bg); }
+    th { text-align:left; padding:10px 14px; font-size:11px; font-weight:600; color:var(--gray); text-transform:uppercase; letter-spacing:.05em; border-bottom:1px solid var(--border); }
+    td { padding:12px 14px; font-size:14px; border-bottom:1px solid var(--border); vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafbfc; }
+    .empty { padding:40px; text-align:center; color:var(--gray); font-size:14px; }
+    .empty span { display:block; font-size:28px; margin-bottom:8px; }
+
+    /* ── Badges ──────────────────────────────────────────── */
+    .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:20px; font-size:12px; font-weight:500; }
+    .badge::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; opacity:.6; }
+    .badge.lead       { background:#e8f0f7; color:#0D2137; }
+    .badge.stufe1     { background:rgba(0,168,232,.12); color:#0078aa; }
+    .badge.stufe2     { background:rgba(0,168,232,.2);  color:#005a8a; }
+    .badge.stufe3     { background:rgba(0,200,150,.12); color:#007a5a; }
+    .badge.stufe4     { background:rgba(0,200,150,.22); color:#006b4f; font-weight:600; }
+    .badge.abgeschlossen { background:rgba(0,200,150,.15); color:#006b4f; }
+    .badge.verloren   { background:#fef2f2; color:#991b1b; }
+    .badge.paid       { background:rgba(0,200,150,.18); color:#006b4f; font-weight:600; }
+    .badge.sent       { background:rgba(0,168,232,.12); color:#0078aa; }
+    .badge.pending    { background:#f0f2f5; color:#4b5a6b; }
+    .badge.overdue    { background:#fef2f2; color:#991b1b; font-weight:600; }
+    .badge.offen      { background:rgba(0,168,232,.12); color:#0078aa; }
+    .badge.angenommen { background:rgba(0,200,150,.18); color:#006b4f; font-weight:600; }
+    .badge.abgelehnt  { background:#fef2f2; color:#991b1b; }
+    .badge.abgelaufen { background:#f9f0e0; color:#92400e; }
+    .badge.storniert  { background:#f0f2f5; color:#6b7280; }
+
+    /* ── Buttons ─────────────────────────────────────────── */
+    .btn-sm { padding:7px 14px; background:var(--accent); color:#0D2137; border:none; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
+    .btn-sm:hover { background:#00b386; box-shadow:0 2px 8px rgba(0,200,150,.3); }
+    .btn-sm.outline { background:transparent; border:1px solid var(--border); color:var(--text); font-weight:400; }
+    .btn-sm.outline:hover { background:var(--bg); box-shadow:none; }
+    .btn-sm.cyan { background:var(--cyan); color:#0D2137; }
+    .btn-sm.cyan:hover { background:#0096d4; }
+    .action-btn { padding:4px 10px; font-size:12px; border:1px solid var(--border); background:var(--white); border-radius:6px; cursor:pointer; transition:all .15s; color:var(--text); }
+    .action-btn:hover { background:var(--accent); color:#0D2137; border-color:var(--accent); font-weight:600; }
+    .action-btn.red:hover { background:var(--red); border-color:var(--red); color:#fff; }
+
+    /* ── Filter ──────────────────────────────────────────── */
+    .filter-select { padding:6px 10px; border:1px solid var(--border); border-radius:7px; font-size:13px; background:#fff; }
+
+    /* ── Modal ───────────────────────────────────────────── */
+    .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:200; display:none; align-items:center; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal { background:#fff; border-radius:14px; padding:30px; width:460px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+    .modal h3 { font-size:17px; font-weight:600; margin-bottom:18px; }
+    .form-group { margin-bottom:14px; }
+    .form-group label { display:block; font-size:12px; font-weight:600; color:var(--gray); text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px;
+      font-size:14px; color:var(--text); outline:none; font-family:inherit;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--blue-l); }
+    .form-group textarea { resize:vertical; min-height:72px; }
+    .form-check { display:flex; align-items:center; gap:8px; }
+    .form-check input { width:auto; }
+    .modal-footer { display:flex; gap:8px; justify-content:flex-end; margin-top:20px; padding-top:18px; border-top:1px solid var(--border); }
+    .btn-cancel  { padding:9px 16px; background:var(--bg); border:1px solid var(--border); border-radius:8px; font-size:14px; cursor:pointer; }
+    .btn-confirm { padding:9px 16px; background:var(--accent); color:#0D2137; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; transition:all .15s; }
+    .btn-confirm:hover { background:#00b386; box-shadow:0 2px 8px rgba(0,200,150,.3); }
+
+    /* ── Line-Items (Angebote Modal) ─────────────────────── */
+    .line-items-table { width:100%; border-collapse:collapse; margin-top:8px; }
+    .line-items-table th { font-size:11px; color:var(--gray); text-transform:uppercase; letter-spacing:.04em; padding:5px 6px; text-align:left; }
+    .line-items-table td { padding:4px 6px; }
+    .line-items-table input { padding:7px 8px; border:1px solid var(--border); border-radius:6px; font-size:13px; width:100%; }
+    .line-items-table .td-pos { width:36px; }
+    .line-items-table .td-qty { width:58px; }
+    .line-items-table .td-price { width:88px; }
+    .line-items-table .td-del { width:28px; text-align:center; }
+    .btn-add-item { padding:6px 12px; background:var(--bg); border:1px dashed var(--border); border-radius:7px; font-size:12px; cursor:pointer; color:var(--gray); width:100%; margin-top:6px; }
+    .btn-add-item:hover { border-color:var(--accent); color:var(--accent); background:#f0fdf8; }
+    .del-item { background:none; border:none; cursor:pointer; color:var(--gray); font-size:16px; padding:0 4px; }
+    .del-item:hover { color:var(--red); }
+
+    /* ── Expense Category Badges ─────────────────────────── */
+    .cat-badge { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:500; }
+    .cat-software_tools    { background:#ede9fe; color:#5b21b6; }
+    .cat-fahrtkosten       { background:#dbeafe; color:#1d4ed8; }
+    .cat-buero_material    { background:#dcfce7; color:#166534; }
+    .cat-marketing_website { background:#fce7f3; color:#9d174d; }
+    .cat-sonstiges         { background:#f0f2f5; color:#4b5a6b; }
+
+    /* ── Dunning Status ──────────────────────────────────── */
+    .dunning-eligible { background:#fef9c3; }
+    .dunning-crit     { background:#fff0f0; }
+
+    /* ── Settings Form ───────────────────────────────────── */
+    .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .settings-section { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:18px; }
+    .settings-section h4 { font-size:14px; font-weight:600; color:var(--dark); margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+    .toggle-wrap { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .toggle-wrap label { font-size:14px; color:var(--text); }
+    input[type=checkbox].toggle { width:36px; height:20px; accent-color:var(--accent); }
+
+    /* ── KPI Highlight ───────────────────────────────────── */
+    .kpi-row { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+    .kpi-box { background:var(--dark); color:#F5F7FA; border-radius:12px; padding:20px; position:relative; overflow:hidden; }
+    .kpi-box::after { content:''; position:absolute; bottom:-20px; right:-20px; width:80px; height:80px; border-radius:50%; background:rgba(0,200,150,.08); }
+    .kpi-box:first-child { border-top:3px solid var(--accent); }
+    .kpi-box:nth-child(2) { border-top:3px solid var(--cyan); }
+    .kpi-box:nth-child(3) { border-top:3px solid #F5F7FA; }
+    .kpi-box .kpi-label { font-size:11px; color:#8ea5b8; text-transform:uppercase; letter-spacing:.06em; font-weight:600; }
+    .kpi-box .kpi-val   { font-size:28px; font-weight:800; margin-top:6px; color:#F5F7FA; }
+    .kpi-box .kpi-sub   { font-size:12px; color:#4b5a6b; margin-top:3px; }
+
+    /* ── Detail-Tabs ─────────────────────────────────────── */
+    .detail-tab {
+      padding:8px 16px; border:none; border-bottom:2px solid transparent;
+      background:transparent; font-size:13px; cursor:pointer; color:var(--gray);
+      font-weight:500; margin-bottom:-2px; transition:all .15s;
+    }
+    .detail-tab.active { color:var(--dark); border-bottom-color:var(--accent); font-weight:700; }
+    .detail-tab:hover { color:var(--dark); }
+
+    /* ── Vertrag-Badges ──────────────────────────────────── */
+    .badge.aktiv     { background:rgba(0,200,150,.18); color:#006b4f; font-weight:600; }
+    .badge.beendet   { background:#f0f2f5; color:#6b7280; }
+
+    /* ── Toast ───────────────────────────────────────────── */
+    #toast { position:fixed; bottom:22px; right:22px; z-index:999; padding:12px 18px; border-radius:10px; font-size:14px; font-weight:500; transform:translateY(70px); opacity:0; transition:all .3s; pointer-events:none; }
+    #toast.show { transform:translateY(0); opacity:1; }
+    #toast.success { background:var(--dark); color:#F5F7FA; border-left:3px solid var(--accent); }
+    #toast.error   { background:#7f1d1d; color:#fecaca; border-left:3px solid var(--red); }
+  </style>
+</head>
+<body>
+
+<!-- Staging Banner -->
+<div id="staging-banner">
+  ⚠️ STAGING-UMGEBUNG – Änderungen hier sind Tests und haben keinen Einfluss auf Production.
+  <a onclick="window.open('https://'+location.hostname.replace('staging.',''),'_blank')">→ Production öffnen</a>
+</div>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-box">
+    <h1>Flowturai</h1>
+    <p>Admin-Dashboard</p>
+    <input class="login-input" type="text"     id="api-url-input"  placeholder="Server-URL  (z.B. https://flowturai.de)" autocomplete="off">
+    <input class="login-input" type="password" id="admin-key-input" placeholder="Admin-Passwort" autocomplete="current-password">
+    <p class="login-hint">Wird nur einmalig auf diesem Gerät gespeichert.</p>
+    <button class="btn-primary" onclick="login()">Anmelden</button>
+    <div id="login-error">Falsches Passwort oder Server nicht erreichbar.</div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <span>Flow<span class="logo-dot">tur</span>ai</span>
+      <small id="env-label">Dashboard</small>
+    </div>
+    <nav>
+      <div class="nav-item active" onclick="showPage('overview')" id="nav-overview">📊 Übersicht</div>
+      <div class="nav-item" onclick="showPage('analytics')" id="nav-analytics">📈 Controlling</div>
+      <div class="nav-item" onclick="showPage('contacts')" id="nav-contacts">👥 Kontakte</div>
+      <div class="nav-item" onclick="showPage('invoices')" id="nav-invoices">📄 Rechnungen</div>
+      <div class="nav-item" onclick="showPage('offers')" id="nav-offers">📋 Angebote</div>
+      <div class="nav-item" onclick="showPage('expenses')" id="nav-expenses">💰 Ausgaben</div>
+      <div class="nav-item" onclick="showPage('subscriptions')" id="nav-subscriptions">🔄 Abos</div>
+      <div class="nav-item" onclick="showPage('contracts')" id="nav-contracts">📜 Verträge</div>
+      <div class="nav-item" onclick="showPage('dunning')" id="nav-dunning">⚠️ Mahnwesen</div>
+      <div class="nav-item" onclick="showPage('inbox')" id="nav-inbox">📬 Posteingang</div>
+      <div class="nav-item" onclick="showPage('accounting')" id="nav-accounting">🧾 Buchhaltung</div>
+    </nav>
+    <div class="sidebar-footer"><p id="footer-env">© 2026 Flowturai</p></div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h2 id="page-title">Übersicht</h2>
+      <div class="topbar-right">
+        <div class="dot-green"></div>
+        <span id="env-badge">System aktiv</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── ÜBERSICHT ──────────────────────────────────── -->
+      <div id="page-overview" class="page active">
+        <div class="stats-grid">
+          <div class="stat-card" style="--c:#00A8E8"><div class="stat-label">Neue Leads</div><div class="stat-value" id="s-leads">—</div><div class="stat-sub">Offene Anfragen</div></div>
+          <div class="stat-card" style="--c:#00A8E8"><div class="stat-label">In Bearbeitung</div><div class="stat-value" id="s-active">—</div><div class="stat-sub">Stufe 1–3</div></div>
+          <div class="stat-card" style="--c:#00C896"><div class="stat-label">Abo-Kunden</div><div class="stat-value" id="s-abo">—</div><div class="stat-sub">Wiederkehrend</div></div>
+          <div class="stat-card" style="--c:#e53935"><div class="stat-label">Offene Rechnungen</div><div class="stat-value" id="s-inv">—</div><div class="stat-sub">Ausstehend</div></div>
+          <div class="stat-card" style="--c:#00C896"><div class="stat-label">MRR</div><div class="stat-value" id="s-mrr">—</div><div class="stat-sub">€ / Monat (Abos)</div></div>
+        </div>
+        <div class="section-header"><h3>Neueste Kontakte</h3><button class="btn-sm outline" onclick="showPage('contacts')">Alle →</button></div>
+        <div id="recent-table" class="table-wrap"><div class="empty"><span>⏳</span>Lädt…</div></div>
+      </div>
+
+      <!-- ── CONTROLLING ────────────────────────────────── -->
+      <div id="page-analytics" class="page">
+        <div class="kpi-row" id="kpi-row">
+          <div class="kpi-box"><div class="kpi-label">MRR</div><div class="kpi-val" id="k-mrr">—</div><div class="kpi-sub">Monatlich wiederkehrend</div></div>
+          <div class="kpi-box"><div class="kpi-label">Jahresumsatz</div><div class="kpi-val" id="k-arr">—</div><div class="kpi-sub">Letzte 12 Monate</div></div>
+          <div class="kpi-box"><div class="kpi-label">Ø Konvertierung</div><div class="kpi-val" id="k-conv">—</div><div class="kpi-sub">Tage Lead → Kunde</div></div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h4>📅 Umsatz letzte 12 Monate</h4>
+            <div class="chart-wrap"><canvas id="chart-revenue"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h4>🔄 Rechnungsstatus</h4>
+            <div class="chart-wrap"><canvas id="chart-invoices"></canvas></div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h4>🏆 Conversion-Funnel</h4>
+            <div id="funnel-wrap" style="padding-top:8px;"></div>
+          </div>
+          <div class="chart-card">
+            <h4>💰 Top-Monate (bezahlt)</h4>
+            <div id="top-months-wrap" style="padding-top:8px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── KONTAKTE ───────────────────────────────────── -->
+      <div id="page-contacts" class="page">
+        <div class="section-header">
+          <h3>Alle Kontakte</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="filter-select" id="filter-status" onchange="loadContacts()">
+              <option value="">Alle Status</option>
+              <option value="lead">Lead</option>
+              <option value="stufe1">Stufe 1</option>
+              <option value="stufe2">Stufe 2</option>
+              <option value="stufe3">Stufe 3</option>
+              <option value="stufe4">Abo</option>
+              <option value="abgeschlossen">Abgeschlossen</option>
+              <option value="verloren">Verloren</option>
+            </select>
+            <button class="btn-sm" onclick="openNewContactModal()">+ Neuer Kontakt</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Betrieb</th><th>E-Mail</th><th>Status</th><th>Seit</th><th>Aktionen</th></tr></thead>
+            <tbody id="contacts-tbody"><tr><td colspan="6"><div class="empty"><span>⏳</span>Lädt…</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── RECHNUNGEN ─────────────────────────────────── -->
+      <div id="page-invoices" class="page">
+        <div class="section-header">
+          <h3>Rechnungen</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray);cursor:pointer;">
+              <input type="checkbox" id="inv-show-archived" onchange="loadInvoices()" style="accent-color:var(--accent)"> Archivierte anzeigen
+            </label>
+            <button class="btn-sm" onclick="openModal('modal-invoice'); populateContactSelect('inv-contact-id')">+ Neue Rechnung</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nummer</th><th>Kunde</th><th>Betrag</th><th>Status</th><th>Fällig</th><th>PDF</th><th>Aktionen</th></tr></thead>
+            <tbody id="invoices-tbody"><tr><td colspan="7"><div class="empty"><span>⏳</span>Lädt…</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── ANGEBOTE ──────────────────────────────────── -->
+      <div id="page-offers" class="page">
+        <div class="section-header">
+          <h3>Angebote</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray);cursor:pointer;">
+              <input type="checkbox" id="offer-show-archived" onchange="loadOffers()" style="accent-color:var(--accent)"> Archivierte anzeigen
+            </label>
+            <select class="filter-select" id="filter-offer-status" onchange="loadOffers()">
+              <option value="">Alle Status</option>
+              <option value="offen">Offen</option>
+              <option value="angenommen">Angenommen</option>
+              <option value="abgelehnt">Abgelehnt</option>
+              <option value="abgelaufen">Abgelaufen</option>
+              <option value="storniert">Storniert</option>
+            </select>
+            <button class="btn-sm" onclick="openOfferModal()">+ Neues Angebot</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nummer</th><th>Kunde</th><th>Betrag</th><th>Status</th><th>Gültig bis</th><th>PDF</th><th>Aktionen</th></tr></thead>
+            <tbody id="offers-tbody"><tr><td colspan="7"><div class="empty"><span>⏳</span>Lädt…</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── AUSGABEN ───────────────────────────────────── -->
+      <div id="page-expenses" class="page">
+        <div class="section-header">
+          <h3>Betriebsausgaben</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <select class="filter-select" id="filter-exp-year" onchange="loadExpenses()">
+              <option value="">Alle Jahre</option>
+            </select>
+            <select class="filter-select" id="filter-exp-cat" onchange="loadExpenses()">
+              <option value="">Alle Kategorien</option>
+              <option value="software_tools">Software & Tools</option>
+              <option value="fahrtkosten">Fahrtkosten</option>
+              <option value="buero_material">Büro & Material</option>
+              <option value="marketing_website">Marketing & Website</option>
+              <option value="sonstiges">Sonstiges</option>
+            </select>
+            <button class="btn-sm" onclick="openNewExpenseModal()">+ Ausgabe erfassen</button>
+          </div>
+        </div>
+        <div id="expense-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px;"></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Datum</th><th>Kategorie</th><th>Beschreibung</th><th>Betrag</th><th>Beleg</th><th>Aktionen</th></tr></thead>
+            <tbody id="expenses-tbody"><tr><td colspan="6"><div class="empty"><span>⏳</span>Lädt…</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── MAHNWESEN ──────────────────────────────────── -->
+      <div id="page-dunning" class="page">
+        <div class="section-header"><h3>Mahnwesen</h3></div>
+
+        <!-- Kandidaten -->
+        <div class="settings-section">
+          <h4>⚠️ Überfällige Rechnungen</h4>
+          <div class="table-wrap" style="margin:0;">
+            <table>
+              <thead><tr><th>Rechnung</th><th>Kunde</th><th>Betrag</th><th>Fällig seit</th><th>Mahnstufe</th><th>Aktion</th></tr></thead>
+              <tbody id="dunning-tbody"><tr><td colspan="6"><div class="empty"><span>⏳</span>Lädt…</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Einstellungen -->
+        <div class="settings-section">
+          <h4>⚙️ Mahnwesen-Einstellungen</h4>
+          <div class="settings-grid">
+            <div class="form-group">
+              <label>1. Mahnung nach X Tagen (ab Fälligkeit)</label>
+              <input type="number" id="set-interval1" value="14" min="1" max="90">
+            </div>
+            <div class="form-group">
+              <label>2. Mahnung nach X Tagen (ab Fälligkeit)</label>
+              <input type="number" id="set-interval2" value="28" min="1" max="180">
+            </div>
+            <div class="form-group">
+              <label>Mahngebühr Stufe 1 (€, 0 = keine)</label>
+              <input type="number" id="set-fee1" value="0" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>Mahngebühr Stufe 2 (€, 0 = keine)</label>
+              <input type="number" id="set-fee2" value="0" min="0" step="0.01">
+            </div>
+          </div>
+          <div class="toggle-wrap" style="margin-top:4px;">
+            <input type="checkbox" class="toggle" id="set-active" checked>
+            <label for="set-active">Automatisches Mahnwesen aktiv (täglich 09:00 Uhr)</label>
+          </div>
+          <div style="margin-top:14px;">
+            <button class="btn-sm" onclick="saveDunningSettings()">Einstellungen speichern</button>
+          </div>
+        </div>
+
+        <!-- Log -->
+        <div class="settings-section">
+          <h4>📋 Mahnungs-Protokoll</h4>
+          <div class="table-wrap" style="margin:0;">
+            <table>
+              <thead><tr><th>Datum</th><th>Rechnung</th><th>Kunde</th><th>Stufe</th><th>Gebühr</th></tr></thead>
+              <tbody id="dunning-log-tbody"><tr><td colspan="5"><div class="empty"><span>⏳</span>Lädt…</div></td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ── BUCHHALTUNG ───────────────────────────────────── -->
+      <div id="page-accounting" class="page">
+        <!-- Kopfzeile: Jahr-Auswahl + Downloads -->
+        <div class="section-header" style="flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <h3>EÜR</h3>
+            <select class="filter-select" id="acc-year" onchange="loadAccounting()" style="font-weight:700;">
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;" id="acc-dl-buttons">
+            <button class="btn-sm" onclick="dlEUR()">⬇ EÜR als PDF</button>
+            <button class="btn-sm outline" onclick="dlCSV('einnahmen')">CSV Einnahmen</button>
+            <button class="btn-sm outline" onclick="dlCSV('ausgaben')">CSV Ausgaben</button>
+            <button class="btn-sm outline" onclick="dlCSV('rechnungsjournal')">CSV Rechnungsjournal</button>
+            <button class="btn-sm outline" onclick="dlCSV('angebotsjournal')">CSV Angebotsjournal</button>
+          </div>
+        </div>
+
+        <!-- KPI-Karten -->
+        <div class="stats-grid" id="acc-kpis">
+          <div class="stat-card" style="--c:#00C896"><div class="stat-label">Einnahmen</div><div class="stat-value" id="acc-income">—</div><div class="stat-sub">Bezahlte Rechnungen</div></div>
+          <div class="stat-card" style="--c:#e53935"><div class="stat-label">Ausgaben</div><div class="stat-value" id="acc-expenses">—</div><div class="stat-sub">Betriebsausgaben</div></div>
+          <div class="stat-card" style="--c:#00A8E8"><div class="stat-label">Gewinn</div><div class="stat-value" id="acc-profit">—</div><div class="stat-sub">vor Steuer</div></div>
+          <div class="stat-card" style="--c:#f59e0b"><div class="stat-label">Offene Rechnungen</div><div class="stat-value" id="acc-open">—</div><div class="stat-sub">Noch nicht bezahlt</div></div>
+        </div>
+
+        <!-- Monatsübersicht -->
+        <div class="section-header"><h3>Monatsübersicht</h3></div>
+        <div class="table-wrap" style="margin-bottom:24px;">
+          <table>
+            <thead><tr><th>Monat</th><th>Einnahmen</th><th>Ausgaben</th><th>Saldo</th></tr></thead>
+            <tbody id="acc-months-tbody"></tbody>
+          </table>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+          <!-- Ausgaben nach Kategorie -->
+          <div>
+            <div class="section-header"><h3>Ausgaben nach Kategorie</h3></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Kategorie</th><th>Betrag</th><th>Anteil</th></tr></thead>
+                <tbody id="acc-cat-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <!-- Top Rechnungen -->
+          <div>
+            <div class="section-header"><h3>Rechnungsjournal</h3></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Nummer</th><th>Datum</th><th>Kunde</th><th>Betrag</th><th>Status</th></tr></thead>
+                <tbody id="acc-inv-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── VERTRÄGE ──────────────────────────────────── -->
+      <div id="page-contracts" class="page">
+        <div class="section-header">
+          <h3>Verträge</h3>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray);cursor:pointer;">
+              <input type="checkbox" id="ct-show-archived" onchange="loadContracts()" style="accent-color:var(--accent)"> Archivierte anzeigen
+            </label>
+            <button class="btn-sm" onclick="openContractModal()">+ Neuer Vertrag</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nummer</th><th>Kunde</th><th>Typ</th><th>Betrag</th><th>Status</th><th>Beginn</th><th>Aktionen</th></tr></thead>
+            <tbody id="contracts-tbody"><tr><td colspan="7"><div class="empty"><span>⏳</span>Lädt…</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── POSTEINGANG ────────────────────────────────── -->
+      <div id="page-inbox" class="page">
+        <div class="section-header">
+          <h3>Posteingang (KI-Verarbeitung)</h3>
+          <button class="btn-sm" onclick="triggerInboxCheck()">🔄 Jetzt prüfen</button>
+        </div>
+        <div class="settings-section" style="margin-bottom:18px;">
+          <h4>ℹ️ Automatische Verarbeitung</h4>
+          <p style="font-size:13px;color:var(--gray);line-height:1.7;">
+            Der Posteingang (<strong>info@flowturai.de</strong>) wird alle 15 Minuten automatisch geprüft.<br>
+            Antwortet ein Kunde auf ein Angebot mit einer Bestätigung, werden automatisch
+            <strong>Rechnung + Vertrag</strong> als PDF erstellt und versendet.<br>
+            Erkannte Angebotsnummern (AN-YYYY-NNN) im Betreff oder Antworttext werden direkt verarbeitet.
+          </p>
+        </div>
+        <div class="section-header"><h3>Verarbeitungsprotokoll</h3></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Datum</th><th>Von</th><th>Betreff</th><th>Aktion</th></tr></thead>
+            <tbody id="inbox-tbody"><tr><td colspan="4"><div class="empty"><span>⏳</span>Lädt…</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── ABOS ───────────────────────────────────────── -->
+      <div id="page-subscriptions" class="page">
+        <div class="section-header">
+          <h3>Betreuungs-Abos</h3>
+          <button class="btn-sm" onclick="openModal('modal-sub'); populateContactSelect('sub-contact-id')">+ Neues Abo</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Kunde</th><th>€/Monat</th><th>Abrechnungstag</th><th>Nächste Rechnung</th><th>Status</th><th>Aktionen</th></tr></thead>
+            <tbody id="subs-tbody"><tr><td colspan="6"><div class="empty"><span>⏳</span>Lädt…</div></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Status ändern -->
+<div class="modal-overlay" id="modal-stage">
+  <div class="modal">
+    <h3>Status ändern</h3>
+    <input type="hidden" id="stage-contact-id">
+    <div class="form-group">
+      <label>Neuer Status</label>
+      <select id="stage-new-status">
+        <option value="lead">Lead</option>
+        <option value="stufe1">Stufe 1 – Erstgespräch geführt</option>
+        <option value="stufe2">Stufe 2 – Vor-Ort-Analyse gebucht</option>
+        <option value="stufe3">Stufe 3 – Implementierung läuft</option>
+        <option value="stufe4">Stufe 4 – Betreuungs-Abo aktiv</option>
+        <option value="abgeschlossen">Abgeschlossen</option>
+        <option value="verloren">Verloren</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Interne Notiz (optional)</label>
+      <textarea id="stage-note" placeholder="z.B. Termin am 15.06. vereinbart…"></textarea>
+    </div>
+    <div class="form-group form-check">
+      <input type="checkbox" id="stage-send-email" checked>
+      <label for="stage-send-email" style="text-transform:none;font-size:14px;color:var(--text);">Automatische E-Mail an Kunden senden</label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-stage')">Abbrechen</button>
+      <button class="btn-confirm" onclick="submitStageChange()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Neue Rechnung -->
+<div class="modal-overlay" id="modal-invoice">
+  <div class="modal">
+    <h3>Neue Rechnung</h3>
+    <div class="form-group"><label>Kunde</label><select id="inv-contact-id" onchange="loadContractsForInvoice()"></select></div>
+    <div class="form-group">
+      <label>Aus Vertrag übernehmen <span style="font-weight:400;color:var(--gray)">(optional – befüllt Betrag & Beschreibung)</span></label>
+      <select id="inv-contract-id" onchange="applyContractToInvoice()">
+        <option value="">— Manuell eingeben —</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Betrag (€)</label><input type="number" id="inv-amount" placeholder="z.B. 690" min="1" step="0.01"></div>
+    <div class="form-group"><label>Beschreibung</label><textarea id="inv-description" placeholder="z.B. Vor-Ort-Analyse – Elektrobetrieb Müller GmbH"></textarea></div>
+    <div class="form-group"><label>Zahlungsziel (Tage)</label><input type="number" id="inv-due-days" value="14" min="1" max="60"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-invoice')">Abbrechen</button>
+      <button class="btn-confirm" onclick="submitInvoice()">Erstellen &amp; Versenden</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Neues Abo -->
+<div class="modal-overlay" id="modal-sub">
+  <div class="modal">
+    <h3>Neues Betreuungs-Abo</h3>
+    <div class="form-group"><label>Kunde</label><select id="sub-contact-id"></select></div>
+    <div class="form-group"><label>Preis / Monat (€)</label><input type="number" id="sub-price" placeholder="z.B. 199" min="1"></div>
+    <div class="form-group"><label>Abrechnungstag (1–28)</label><input type="number" id="sub-billing-day" value="1" min="1" max="28"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-sub')">Abbrechen</button>
+      <button class="btn-confirm" onclick="submitSub()">Abo starten</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Neues Angebot -->
+<div class="modal-overlay" id="modal-offer">
+  <div class="modal" style="width:600px;max-width:97vw;">
+    <h3>Neues Angebot erstellen</h3>
+    <div class="form-group"><label>Kunde</label><select id="offer-contact-id"></select></div>
+    <div class="form-group"><label>Gültigkeitsdauer (Tage)</label><input type="number" id="offer-valid-days" value="30" min="1" max="365"></div>
+    <div class="form-group">
+      <label>Paket-Vorlage <span style="font-weight:400;color:var(--gray)">(optional – befüllt Positionen automatisch)</span></label>
+      <select id="offer-template" onchange="applyOfferTemplate()" style="background:#f8fafc;">
+        <option value="">— Manuell befüllen —</option>
+        <optgroup label="Einmalige Integration">
+          <option value="Quick Start">Quick Start (995 €)</option>
+          <option value="Professional">Professional (2.495 €)</option>
+          <option value="Advanced">Advanced (4.995 €)</option>
+          <option value="Enterprise">Enterprise (Auf Anfrage)</option>
+        </optgroup>
+        <optgroup label="Laufende Betreuung">
+          <option value="Basis Abo">Basis Abo (149 €/Monat)</option>
+          <option value="Standard Abo">Standard Abo (349 €/Monat)</option>
+          <option value="Premium Abo">Premium Abo (699 €/Monat)</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Positionen</label>
+      <table class="line-items-table">
+        <thead><tr><th class="td-pos">Pos</th><th>Beschreibung</th><th class="td-qty">Menge</th><th class="td-price">Einzelpr. €</th><th class="td-del"></th></tr></thead>
+        <tbody id="offer-items-body"></tbody>
+      </table>
+      <button class="btn-add-item" onclick="addLineItem()">+ Position hinzufügen</button>
+    </div>
+    <div class="form-group" style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:4px;">
+      <span style="font-size:13px;color:var(--gray);">Gesamtbetrag:</span>
+      <strong id="offer-total-preview" style="font-size:16px;color:var(--dark);">0,00 €</strong>
+    </div>
+    <div class="form-group"><label>Notizen (optional)</label><textarea id="offer-notes" placeholder="z.B. Angebot gilt für Standard-Paket ohne laufenden Support…"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-offer')">Abbrechen</button>
+      <button class="btn-confirm" onclick="submitOffer()">Erstellen &amp; Versenden</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Neue Ausgabe -->
+<div class="modal-overlay" id="modal-expense">
+  <div class="modal">
+    <h3>Ausgabe erfassen</h3>
+    <input type="hidden" id="expense-edit-id">
+    <div class="form-group"><label>Datum</label><input type="date" id="exp-date"></div>
+    <div class="form-group">
+      <label>Kategorie</label>
+      <select id="exp-category">
+        <option value="software_tools">Software & Tools</option>
+        <option value="fahrtkosten">Fahrtkosten</option>
+        <option value="buero_material">Büro & Material</option>
+        <option value="marketing_website">Marketing & Website</option>
+        <option value="sonstiges">Sonstiges</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Beschreibung</label><input type="text" id="exp-description" placeholder="z.B. GitHub Copilot Abo"></div>
+    <div class="form-group"><label>Betrag (€)</label><input type="number" id="exp-amount" placeholder="z.B. 19.99" min="0.01" step="0.01"></div>
+    <div class="form-group"><label>Belegnummer / Dateiname (optional)</label><input type="text" id="exp-receipt" placeholder="z.B. RE-2026-042"></div>
+    <div class="form-group"><label>Notizen (optional)</label><textarea id="exp-notes" placeholder="Interne Notizen…"></textarea></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-expense')">Abbrechen</button>
+      <button class="btn-confirm" onclick="submitExpense()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Neuer Kontakt (manuell) -->
+<div class="modal-overlay" id="modal-new-contact">
+  <div class="modal">
+    <h3>Neuen Kontakt anlegen</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 14px;">
+      <div class="form-group">
+        <label>Name <span style="color:var(--red)">*</span></label>
+        <input type="text" id="nc-name" placeholder="Max Mustermann">
+      </div>
+      <div class="form-group">
+        <label>E-Mail</label>
+        <input type="email" id="nc-email" placeholder="max@beispiel.de">
+      </div>
+      <div class="form-group">
+        <label>Telefon</label>
+        <input type="tel" id="nc-phone" placeholder="+49 151 12345678">
+      </div>
+      <div class="form-group">
+        <label>Betrieb / Firma</label>
+        <input type="text" id="nc-company" placeholder="Muster GmbH">
+      </div>
+      <div class="form-group">
+        <label>Straße &amp; Hausnummer</label>
+        <input type="text" id="nc-address" placeholder="Hauptstraße 12">
+      </div>
+      <div class="form-group">
+        <label>PLZ &amp; Ort</label>
+        <input type="text" id="nc-city" placeholder="12345 Musterstadt">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Branche</label>
+      <select id="nc-industry">
+        <option value="">— Bitte wählen —</option>
+        <option value="Elektro">Elektro</option>
+        <option value="Sanitär / Heizung">Sanitär / Heizung</option>
+        <option value="Dachdecker">Dachdecker</option>
+        <option value="Maler / Stuckateure">Maler / Stuckateure</option>
+        <option value="Zimmerer / Holzbau">Zimmerer / Holzbau</option>
+        <option value="Kfz-Betrieb">Kfz-Betrieb</option>
+        <option value="Gastronomie">Gastronomie</option>
+        <option value="Friseur / Kosmetik">Friseur / Kosmetik</option>
+        <option value="Einzelhandel">Einzelhandel</option>
+        <option value="Sonstiges">Sonstiges</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Anfangsstatus</label>
+      <select id="nc-status">
+        <option value="lead">Lead (Standard)</option>
+        <option value="stufe1">Stufe 1 – Erstgespräch geführt</option>
+        <option value="stufe2">Stufe 2 – Analyse gebucht</option>
+        <option value="stufe3">Stufe 3 – Implementierung</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Interne Notiz (optional)</label>
+      <textarea id="nc-notes" placeholder="Woher kam der Kontakt? Erste Infos…"></textarea>
+    </div>
+    <div class="form-group form-check">
+      <input type="checkbox" id="nc-send-email">
+      <label for="nc-send-email" style="text-transform:none;font-size:14px;color:var(--text);">Bestätigungs-E-Mail an Kontakt senden</label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-new-contact')">Abbrechen</button>
+      <button class="btn-confirm" onclick="submitNewContact()">Kontakt anlegen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Kunden-Detailansicht -->
+<div class="modal-overlay" id="modal-contact-detail">
+  <div class="modal" style="width:720px;max-width:97vw;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div>
+        <h3 id="detail-name" style="margin:0;font-size:19px;">—</h3>
+        <div id="detail-meta" style="font-size:13px;color:var(--gray);margin-top:3px;">—</div>
+      </div>
+      <button class="btn-cancel" onclick="closeModal('modal-contact-detail')">✕ Schließen</button>
+    </div>
+
+    <!-- Tab-Navigation -->
+    <div style="display:flex;gap:4px;border-bottom:2px solid var(--border);margin-bottom:16px;">
+      <button class="detail-tab active" data-tab="info"      onclick="switchDetailTab('info')">👤 Info</button>
+      <button class="detail-tab"        data-tab="invoices"  onclick="switchDetailTab('invoices')">📄 Rechnungen</button>
+      <button class="detail-tab"        data-tab="offers"    onclick="switchDetailTab('offers')">📋 Angebote</button>
+      <button class="detail-tab"        data-tab="contracts" onclick="switchDetailTab('contracts')">📜 Verträge</button>
+    </div>
+
+    <!-- Tab: Info -->
+    <div id="detail-tab-info" class="detail-tab-content">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="form-group" style="margin:0"><label>E-Mail</label><div id="d-email" style="padding:8px 0;font-size:14px;">—</div></div>
+        <div class="form-group" style="margin:0"><label>Telefon</label><div id="d-phone" style="padding:8px 0;font-size:14px;">—</div></div>
+        <div class="form-group" style="margin:0"><label>Betrieb</label><div id="d-company" style="padding:8px 0;font-size:14px;">—</div></div>
+        <div class="form-group" style="margin:0"><label>Branche</label><div id="d-industry" style="padding:8px 0;font-size:14px;">—</div></div>
+        <div class="form-group" style="margin:0"><label>Status</label><div id="d-status" style="padding:8px 0;">—</div></div>
+        <div class="form-group" style="margin:0"><label>Seit</label><div id="d-since" style="padding:8px 0;font-size:14px;">—</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+        <div class="form-group" style="margin:0"><label>Anschrift</label><div id="d-address" style="padding:8px 0;font-size:14px;">—</div></div>
+        <div class="form-group" style="margin:0"><label>Wunschtermin (unbestätigt)</label><div id="d-appointment" style="padding:8px 0;font-size:14px;color:var(--accent);">—</div></div>
+      </div>
+      <div class="form-group" style="margin-top:12px;"><label>Interne Notiz</label><div id="d-notes" style="padding:10px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text);white-space:pre-wrap;min-height:48px;">—</div></div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-sm" id="d-btn-stage" onclick="">Status ändern</button>
+        <button class="btn-sm outline" id="d-btn-invoice" onclick="">+ Rechnung</button>
+        <button class="btn-sm outline" id="d-btn-offer" onclick="">+ Angebot</button>
+        <button class="btn-sm outline" id="d-btn-contract" onclick="">+ Vertrag</button>
+      </div>
+    </div>
+
+    <!-- Tab: Rechnungen -->
+    <div id="detail-tab-invoices" class="detail-tab-content" style="display:none;">
+      <div id="detail-invoices-list"><div class="empty"><span>⏳</span>Lädt…</div></div>
+    </div>
+
+    <!-- Tab: Angebote -->
+    <div id="detail-tab-offers" class="detail-tab-content" style="display:none;">
+      <div id="detail-offers-list"><div class="empty"><span>⏳</span>Lädt…</div></div>
+    </div>
+
+    <!-- Tab: Verträge -->
+    <div id="detail-tab-contracts" class="detail-tab-content" style="display:none;">
+      <div id="detail-contracts-list"><div class="empty"><span>⏳</span>Lädt…</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Neuer Vertrag -->
+<div class="modal-overlay" id="modal-contract">
+  <div class="modal">
+    <h3>Neuen Vertrag erstellen</h3>
+    <div class="form-group"><label>Kunde</label><select id="ct-contact-id" onchange="loadOffersForContract()"></select></div>
+    <div class="form-group">
+      <label>Angebot verknüpfen <span style="font-weight:400;color:var(--gray)">(optional – befüllt Betrag & Inhalt)</span></label>
+      <select id="ct-offer-id" onchange="applyOfferToContract()">
+        <option value="">— Kein Angebot —</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Vertragstyp</label>
+      <select id="ct-type">
+        <option value="betreuung">Betreuungsvertrag (monatlich)</option>
+        <option value="implementierung">Implementierungsvertrag (einmalig)</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Betrag (€ / Monat oder Gesamtbetrag)</label><input type="number" id="ct-amount" placeholder="z.B. 199" min="0" step="0.01"></div>
+    <div class="form-group"><label>Startdatum</label><input type="date" id="ct-start-date"></div>
+    <div class="form-group"><label>Leistungsumfang / Notizen</label><textarea id="ct-notes" placeholder="z.B. Monatliche Betreuung: Updates, Optimierung, Support…"></textarea></div>
+    <div class="form-group form-check">
+      <input type="checkbox" id="ct-send-email" checked>
+      <label for="ct-send-email" style="text-transform:none;font-size:14px;color:var(--text);">Vertrag per E-Mail an Kunden senden</label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-contract')">Abbrechen</button>
+      <button class="btn-confirm" onclick="submitContract()">Erstellen &amp; Versenden</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Kontakt bearbeiten -->
+<div class="modal-overlay" id="modal-edit-contact">
+  <div class="modal">
+    <h3>Kontakt bearbeiten</h3>
+    <input type="hidden" id="ec-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 14px;">
+      <div class="form-group">
+        <label>Name <span style="color:var(--red)">*</span></label>
+        <input type="text" id="ec-name" placeholder="Max Mustermann">
+      </div>
+      <div class="form-group">
+        <label>E-Mail</label>
+        <input type="email" id="ec-email" placeholder="max@beispiel.de">
+      </div>
+      <div class="form-group">
+        <label>Telefon</label>
+        <input type="tel" id="ec-phone" placeholder="+49 151 12345678">
+      </div>
+      <div class="form-group">
+        <label>Betrieb / Firma</label>
+        <input type="text" id="ec-company" placeholder="Muster GmbH">
+      </div>
+      <div class="form-group">
+        <label>Straße &amp; Hausnummer</label>
+        <input type="text" id="ec-address" placeholder="Hauptstraße 12">
+      </div>
+      <div class="form-group">
+        <label>PLZ &amp; Ort</label>
+        <input type="text" id="ec-city" placeholder="12345 Musterstadt">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Branche</label>
+      <select id="ec-industry">
+        <option value="">— Bitte wählen —</option>
+        <option value="Elektro">Elektro</option>
+        <option value="Sanitär / Heizung">Sanitär / Heizung</option>
+        <option value="Dachdecker">Dachdecker</option>
+        <option value="Maler / Stuckateure">Maler / Stuckateure</option>
+        <option value="Zimmerer / Holzbau">Zimmerer / Holzbau</option>
+        <option value="Kfz-Betrieb">Kfz-Betrieb</option>
+        <option value="Gastronomie">Gastronomie</option>
+        <option value="Friseur / Kosmetik">Friseur / Kosmetik</option>
+        <option value="Einzelhandel">Einzelhandel</option>
+        <option value="Sonstiges">Sonstiges</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Interne Notiz</label>
+      <textarea id="ec-notes" placeholder="Interne Notizen…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-edit-contact')">Abbrechen</button>
+      <button class="btn-confirm" onclick="submitEditContact()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── Config (localStorage) ─────────────────────────────────
+let API   = localStorage.getItem('ft_api')  || '';
+let AKEY  = localStorage.getItem('ft_akey') || '';
+let revenueChart = null, invoiceChart = null;
+
+const PAGE_TITLES = {
+  overview:'Übersicht', analytics:'Controlling', contacts:'Kontakte',
+  invoices:'Rechnungen', offers:'Angebote', expenses:'Ausgaben',
+  subscriptions:'Abos', contracts:'Verträge', dunning:'Mahnwesen',
+  inbox:'Posteingang', accounting:'Buchhaltung',
+};
+
+// ── Login ─────────────────────────────────────────────────
+async function login() {
+  const url = document.getElementById('api-url-input').value.trim().replace(/\/$/, '');
+  const key = document.getElementById('admin-key-input').value.trim();
+  if (!url || !key) { document.getElementById('login-error').style.display = 'block'; return; }
+  try {
+    const res = await fetch(`${url}/api/env`, { headers: { 'x-admin-key': key } });
+    if (!res.ok) throw new Error('Auth failed');
+    const data = await res.json();
+    localStorage.setItem('ft_api', url);
+    localStorage.setItem('ft_akey', key);
+    API = url; AKEY = key;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    applyEnv(data.environment);
+    loadAll();
+  } catch {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  if (API && AKEY) {
+    fetch(`${API}/api/env`, { headers:{ 'x-admin-key': AKEY } })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d) {
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('app').style.display = 'block';
+          applyEnv(d.environment);
+          loadAll();
+        }
+      }).catch(() => {});
+  }
+  document.getElementById('admin-key-input').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+});
+
+function applyEnv(env) {
+  if (env === 'staging') {
+    document.getElementById('staging-banner').style.display = 'block';
+    document.body.classList.add('is-staging');
+    document.getElementById('env-label').textContent = 'STAGING';
+    document.getElementById('env-badge').textContent = 'Staging-System';
+    document.getElementById('footer-env').textContent = '⚠️ STAGING';
+  } else {
+    document.getElementById('env-label').textContent = 'Production';
+  }
+}
+
+// ── Navigation ────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.getElementById(`nav-${name}`).classList.add('active');
+  document.getElementById('page-title').textContent = PAGE_TITLES[name];
+  if (name === 'contacts')      loadContacts();
+  if (name === 'invoices')      loadInvoices();
+  if (name === 'subscriptions') loadSubs();
+  if (name === 'analytics')     loadAnalytics();
+  if (name === 'offers')        loadOffers();
+  if (name === 'expenses')      loadExpenses();
+  if (name === 'dunning')       loadDunning();
+  if (name === 'accounting')    loadAccounting();
+  if (name === 'contracts')     loadContracts();
+  if (name === 'inbox')         loadInboxLog();
+}
+
+// ── API Helper ────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch(`${API}${path}`, {
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': AKEY, ...opts.headers },
+    ...opts,
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e.error || res.status); }
+  return res.json();
+}
+
+// ── Load All (Overview) ───────────────────────────────────
+async function loadAll() {
+  try {
+    const [contacts, invoices, subs, analytics] = await Promise.all([
+      api('/api/contacts'),
+      api('/api/invoices'),
+      api('/api/subscriptions'),
+      api('/api/analytics'),
+    ]);
+    document.getElementById('s-leads').textContent  = contacts.filter(c => c.status === 'lead').length;
+    document.getElementById('s-active').textContent = contacts.filter(c => ['stufe1','stufe2','stufe3'].includes(c.status)).length;
+    document.getElementById('s-abo').textContent    = subs.filter(s => s.status === 'active').length;
+    document.getElementById('s-inv').textContent    = invoices.filter(i => ['sent','pending','overdue'].includes(i.status)).length;
+    document.getElementById('s-mrr').textContent    = `${analytics.umsatz.mrr.toFixed(0)} €`;
+    renderRecentTable(contacts.slice(0, 6));
+  } catch (e) { toast('Fehler: ' + e.message, 'error'); }
+}
+
+function renderRecentTable(rows) {
+  const el = document.getElementById('recent-table');
+  if (!rows.length) { el.innerHTML = '<div class="empty"><span>👥</span>Noch keine Kontakte</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Name</th><th>Betrieb</th><th>Status</th><th>Datum</th><th>Aktion</th></tr></thead><tbody>
+    ${rows.map(c => `<tr>
+      <td><strong>${esc(c.name)}</strong></td>
+      <td>${esc(c.company||'—')}</td>
+      <td><span class="badge ${c.status}">${stageLabel(c.status)}</span></td>
+      <td>${fmtDate(c.created_at)}</td>
+      <td><button class="action-btn" onclick="openStageModal('${c.id}','${c.status}')">Status</button></td>
+    </tr>`).join('')}
+  </tbody></table>`;
+}
+
+// ── Analytics / Controlling ───────────────────────────────
+let analyticsData = null;
+async function loadAnalytics() {
+  try {
+    const d = await api('/api/analytics');
+    analyticsData = d;
+    document.getElementById('k-mrr').textContent  = `${d.umsatz.mrr.toFixed(0)} €`;
+    document.getElementById('k-arr').textContent  = `${d.umsatz.jahresUmsatz.toFixed(0)} €`;
+    document.getElementById('k-conv').textContent = `${d.performance.avgKonvertierungTage} T`;
+    renderRevenueChart(d.umsatz.monatsVerlauf);
+    renderInvoiceChart(d.invoices);
+    renderFunnel(d.funnel);
+    renderTopMonths(d.umsatz.topMonate);
+  } catch (e) { toast('Analytics-Fehler: ' + e.message, 'error'); }
+}
+
+function renderRevenueChart(data) {
+  const ctx = document.getElementById('chart-revenue').getContext('2d');
+  if (revenueChart) revenueChart.destroy();
+  revenueChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels:   data.map(r => r.monat),
+      datasets: [{ label:'Umsatz (€)', data: data.map(r => r.umsatz),
+        backgroundColor: (ctx) => {
+          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 200);
+          g.addColorStop(0, '#00C896'); g.addColorStop(1, 'rgba(0,200,150,.3)');
+          return g;
+        },
+        borderRadius: 6, borderSkipped: false }],
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } },
+      scales: { y:{ grid:{ color:'#eef1f5' }, ticks:{ callback: v => v+'€', color:'#6b7280' } }, x:{ grid:{ display:false }, ticks:{ color:'#6b7280' } } } },
+  });
+}
+
+function renderInvoiceChart(invData) {
+  const ctx = document.getElementById('chart-invoices').getContext('2d');
+  if (invoiceChart) invoiceChart.destroy();
+  const labels = ['Bezahlt','Versendet','Ausstehend','Überfällig'];
+  const values = [invData.paid?.summe||0, invData.sent?.summe||0, invData.pending?.summe||0, invData.overdue?.summe||0];
+  const colors = ['#00C896','#00A8E8','#8ea5b8','#e53935'];
+  invoiceChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, font:{ size:11 } } } } },
+  });
+}
+
+function renderFunnel(f) {
+  const stages = [
+    { key:'lead',   label:'Lead',    color:'#8ea5b8' },
+    { key:'stufe1', label:'Stufe 1', color:'#00A8E8' },
+    { key:'stufe2', label:'Stufe 2', color:'#0088c4' },
+    { key:'stufe3', label:'Stufe 3', color:'#00d4a8' },
+    { key:'stufe4', label:'Abo',     color:'#00C896' },
+  ];
+  const max = Math.max(...stages.map(s => f[s.key] || 0), 1);
+  document.getElementById('funnel-wrap').innerHTML = stages.map(s => {
+    const val = f[s.key] || 0;
+    const pct = Math.round((val / max) * 100);
+    return `<div class="funnel-row">
+      <div class="funnel-label">${s.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${pct}%;background:${s.color}">
+          ${val > 0 ? `<span>${val}</span>` : ''}
+        </div>
+      </div>
+      <div class="funnel-count">${val}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderTopMonths(months) {
+  if (!months.length) { document.getElementById('top-months-wrap').innerHTML = '<p style="color:var(--gray);font-size:13px;">Noch keine bezahlten Rechnungen.</p>'; return; }
+  document.getElementById('top-months-wrap').innerHTML = months.map(m =>
+    `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px;">
+      <span>${m.monat}</span>
+      <strong>${parseFloat(m.umsatz).toFixed(2).replace('.',',')} €</strong>
+    </div>`
+  ).join('');
+}
+
+// ── Contacts ──────────────────────────────────────────────
+let _contactsCache = {};
+
+function openNewContactModal() {
+  ['nc-name','nc-email','nc-phone','nc-company','nc-address','nc-city','nc-notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('nc-industry').value  = '';
+  document.getElementById('nc-status').value    = 'lead';
+  document.getElementById('nc-send-email').checked = false;
+  openModal('modal-new-contact');
+}
+
+async function submitNewContact() {
+  const name      = document.getElementById('nc-name').value.trim();
+  const email     = document.getElementById('nc-email').value.trim();
+  const phone     = document.getElementById('nc-phone').value.trim();
+  const company   = document.getElementById('nc-company').value.trim();
+  const address   = document.getElementById('nc-address').value.trim();
+  const city      = document.getElementById('nc-city').value.trim();
+  const industry  = document.getElementById('nc-industry').value;
+  const status    = document.getElementById('nc-status').value;
+  const notes     = document.getElementById('nc-notes').value.trim();
+  const sendEmail = document.getElementById('nc-send-email').checked;
+
+  if (!name) { toast('Name ist ein Pflichtfeld', 'error'); return; }
+
+  try {
+    const r = await api('/api/contacts', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, phone, company, address, city, industry, status, notes, sendEmail }),
+    });
+    closeModal('modal-new-contact');
+    toast(`✅ Kontakt ${r.name} angelegt`);
+    loadContacts(); loadAll();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function loadContacts() {
+  const status = document.getElementById('filter-status')?.value;
+  const q      = status ? `?status=${status}` : '';
+  const rows   = await api(`/api/contacts${q}`).catch(() => []);
+  const tbody  = document.getElementById('contacts-tbody');
+  _contactsCache = {};
+  rows.forEach(c => { _contactsCache[c.id] = c; });
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span>👥</span>Keine Kontakte</div></td></tr>'; return; }
+  tbody.innerHTML = rows.map(c => `<tr>
+    <td><strong style="cursor:pointer;color:var(--cyan);text-decoration:underline dotted;" onclick="openContactDetail('${c.id}')">${esc(c.name)}</strong></td>
+    <td>${esc(c.company||'—')}</td>
+    <td>${c.email ? `<a href="mailto:${esc(c.email)}" style="color:var(--blue-l)">${esc(c.email)}</a>` : '<span style="color:var(--gray)">—</span>'}</td>
+    <td><span class="badge ${c.status}">${stageLabel(c.status)}</span></td>
+    <td>${fmtDate(c.created_at)}</td>
+    <td style="display:flex;gap:4px;flex-wrap:wrap;">
+      <button class="action-btn" onclick="openStageModal('${c.id}','${c.status}')">Status</button>
+      <button class="action-btn" onclick="openEditContactModal('${c.id}')">Bearbeiten</button>
+      <button class="action-btn" onclick="openModal('modal-invoice');populateContactSelect('inv-contact-id','${c.id}').then(()=>loadContractsForInvoice())">Rechnung</button>
+      <button class="action-btn" onclick="openContractModal('${c.id}')">Vertrag</button>
+    </td>
+  </tr>`).join('');
+}
+
+// ── Invoices ──────────────────────────────────────────────
+async function loadInvoices() {
+  const showArchived = document.getElementById('inv-show-archived')?.checked;
+  const q     = showArchived ? '?archived=true' : '';
+  const rows  = await api(`/api/invoices${q}`).catch(() => []);
+  const tbody = document.getElementById('invoices-tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span>📄</span>Keine Rechnungen</div></td></tr>'; return; }
+  tbody.innerHTML = rows.map(i => `<tr${i.archived ? ' style="opacity:.5"' : ''}>
+    <td><strong>${esc(i.invoice_number)}</strong>${i.archived ? ' <span style="font-size:10px;color:var(--gray)">[Archiv]</span>' : ''}</td>
+    <td>${esc(i.contact_name||'—')}</td>
+    <td><strong>${parseFloat(i.amount).toFixed(2).replace('.',',')} €</strong></td>
+    <td><span class="badge ${i.status}">${invLabel(i.status)}</span></td>
+    <td>${i.due_date ? fmtDate(i.due_date) : '—'}</td>
+    <td><button class="action-btn" onclick="viewPdf('${API}/api/invoice/${i.id}/pdf','Rechnung-${esc(i.invoice_number)}.pdf')">↓ PDF</button></td>
+    <td style="display:flex;gap:4px;flex-wrap:wrap;">
+      ${!i.archived && i.status !== 'paid' && i.status !== 'cancelled' ? `<button class="action-btn" onclick="markPaid('${i.id}')">✓ Bezahlt</button>` : ''}
+      ${!i.archived && i.status !== 'cancelled' ? `<button class="action-btn" title="Erneut senden" onclick="sendDoc('invoice','${i.id}','${esc(i.invoice_number)}')">✉</button>` : ''}
+      ${!i.archived && i.status !== 'cancelled' && i.status !== 'paid' ? `<button class="action-btn red" onclick="cancelInvoice('${i.id}','${i.invoice_number}')">Storno</button>` : ''}
+      ${i.status === 'cancelled' ? `<span style="color:var(--gray);font-size:11px">${i.cancellation_number||'storniert'}</span>` : ''}
+      <button class="action-btn" title="${i.archived?'Wiederherstellen':'Archivieren'}" onclick="archiveDoc('invoice','${i.id}',${!i.archived})">${i.archived?'↩':'📦'}</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function archiveDoc(type, id, archive) {
+  const label = { invoice:'Rechnung', offer:'Angebot', contract:'Vertrag' }[type];
+  const action = archive ? 'archivieren' : 'wiederherstellen';
+  if (!confirm(`${label} wirklich ${action}?`)) return;
+  try {
+    await api(`/api/${type === 'invoice' ? 'invoice' : type === 'offer' ? 'offers' : 'contracts'}/${id}/archive`,
+      { method: 'POST', body: JSON.stringify({ archived: archive }) });
+    toast(`${archive ? '📦 Archiviert' : '↩ Wiederhergestellt'}`);
+    if (type === 'invoice')   loadInvoices();
+    if (type === 'offer')     loadOffers();
+    if (type === 'contract')  loadContracts();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Subscriptions ─────────────────────────────────────────
+async function loadSubs() {
+  const rows  = await api('/api/subscriptions').catch(() => []);
+  const tbody = document.getElementById('subs-tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span>🔄</span>Keine Abos</div></td></tr>'; return; }
+  tbody.innerHTML = rows.map(s => `<tr>
+    <td><strong>${esc(s.contact_name||'—')}</strong></td>
+    <td>${parseFloat(s.price).toFixed(2).replace('.',',')} €</td>
+    <td>${s.billing_day}. des Monats</td>
+    <td>${s.next_billing_date ? fmtDate(s.next_billing_date) : '—'}</td>
+    <td><span class="badge ${s.status==='active'?'stufe4':'verloren'}">${s.status==='active'?'Aktiv':s.status}</span></td>
+    <td>${s.status==='active'?`<button class="action-btn red" onclick="cancelSub('${s.id}')">Kündigen</button>`:''}</td>
+  </tr>`).join('');
+}
+
+// ── Modals ────────────────────────────────────────────────
+function openStageModal(id, cur) {
+  document.getElementById('stage-contact-id').value   = id;
+  document.getElementById('stage-new-status').value   = cur;
+  document.getElementById('stage-note').value         = '';
+  document.getElementById('stage-send-email').checked = true;
+  openModal('modal-stage');
+}
+async function populateContactSelect(selId, preselect = '') {
+  const contacts = await api('/api/contacts').catch(() => []);
+  document.getElementById(selId).innerHTML = contacts.map(c =>
+    `<option value="${c.id}" ${c.id===preselect?'selected':''}>${esc(c.name)}${c.company?' – '+esc(c.company):''}</option>`
+  ).join('');
+}
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.addEventListener('keydown', e => { if (e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); });
+
+// ── Submissions ───────────────────────────────────────────
+async function submitStageChange() {
+  const contactId        = document.getElementById('stage-contact-id').value;
+  const newStage         = document.getElementById('stage-new-status').value;
+  const note             = document.getElementById('stage-note').value;
+  const sendNotification = document.getElementById('stage-send-email').checked;
+  try {
+    const r = await api('/api/update-stage', { method:'POST', body: JSON.stringify({ contactId, newStage, note, sendNotification }) });
+    closeModal('modal-stage');
+    toast(`✅ ${r.message}`);
+    loadAll(); loadContacts();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function loadContractsForInvoice() {
+  const contactId = document.getElementById('inv-contact-id').value;
+  const sel = document.getElementById('inv-contract-id');
+  sel.innerHTML = '<option value="">— Manuell eingeben —</option>';
+  if (!contactId) return;
+  try {
+    const contracts = await api(`/api/contracts`);
+    const contactContracts = contracts.filter(c => c.contact_id === contactId && c.status === 'aktiv');
+    contactContracts.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.dataset.amount = c.amount;
+      opt.dataset.notes  = c.notes || '';
+      opt.dataset.type   = c.type;
+      opt.textContent = `${c.contract_number} – ${parseFloat(c.amount).toFixed(2).replace('.',',')} € (${c.type === 'implementierung' ? 'Einmalig' : 'Monatlich'})`;
+      sel.appendChild(opt);
+    });
+  } catch (_) {}
+}
+
+function applyContractToInvoice() {
+  const sel = document.getElementById('inv-contract-id');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) return;
+  if (opt.dataset.amount) document.getElementById('inv-amount').value = opt.dataset.amount;
+  if (opt.dataset.notes)  document.getElementById('inv-description').value = opt.dataset.notes;
+}
+
+async function submitInvoice() {
+  const contactId   = document.getElementById('inv-contact-id').value;
+  const contractId  = document.getElementById('inv-contract-id').value || null;
+  const amount      = document.getElementById('inv-amount').value;
+  const description = document.getElementById('inv-description').value;
+  const dueInDays   = parseInt(document.getElementById('inv-due-days').value);
+  if (!amount || !description) { toast('Betrag und Beschreibung erforderlich', 'error'); return; }
+  try {
+    const r = await api('/api/send-invoice', { method:'POST', body: JSON.stringify({ contactId, contractId, amount:parseFloat(amount), description, dueInDays }) });
+    closeModal('modal-invoice');
+    toast(`✅ Rechnung ${r.invoiceNumber} verschickt`);
+    loadInvoices(); loadAll();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function submitSub() {
+  const contactId  = document.getElementById('sub-contact-id').value;
+  const price      = document.getElementById('sub-price').value;
+  const billingDay = parseInt(document.getElementById('sub-billing-day').value);
+  if (!price) { toast('Preis eingeben', 'error'); return; }
+  try {
+    await api('/api/subscriptions', { method:'POST', body: JSON.stringify({ contactId, price:parseFloat(price), billingDay }) });
+    closeModal('modal-sub');
+    toast('✅ Abo gestartet & Willkommens-E-Mail verschickt');
+    loadSubs(); loadAll();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function markPaid(id) {
+  await api(`/api/invoice/${id}/paid`, { method:'POST' }).catch(e => toast(e.message,'error'));
+  toast('✅ Als bezahlt markiert');
+  loadInvoices(); loadAll();
+}
+
+async function cancelSub(id) {
+  if (!confirm('Abo wirklich kündigen?')) return;
+  await api(`/api/subscriptions/${id}/cancel`, { method:'POST' }).catch(e => toast(e.message,'error'));
+  toast('Abo gekündigt');
+  loadSubs(); loadAll();
+}
+
+// ── Offers ────────────────────────────────────────────────
+async function loadOffers() {
+  const status       = document.getElementById('filter-offer-status')?.value;
+  const showArchived = document.getElementById('offer-show-archived')?.checked;
+  const params       = [];
+  if (status)       params.push(`status=${status}`);
+  if (showArchived) params.push('archived=true');
+  const q    = params.length ? '?' + params.join('&') : '';
+  const rows = await api(`/api/offers${q}`).catch(() => []);
+  const tbody = document.getElementById('offers-tbody');
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span>📋</span>Keine Angebote</div></td></tr>'; return; }
+  tbody.innerHTML = rows.map(o => {
+    const expired = o.status === 'offen' && new Date(o.valid_until) < new Date();
+    return `<tr${o.archived ? ' style="opacity:.5"' : ''}>
+      <td><strong>${esc(o.offer_number)}</strong>${o.archived ? ' <span style="font-size:10px;color:var(--gray)">[Archiv]</span>' : ''}</td>
+      <td>${esc(o.contact_name||'—')}${o.company ? `<br><small style="color:var(--gray)">${esc(o.company)}</small>` : ''}</td>
+      <td><strong>${parseFloat(o.amount).toFixed(2).replace('.',',')} €</strong></td>
+      <td><span class="badge ${expired ? 'abgelaufen' : o.status}">${offerLabel(o.status, expired)}</span></td>
+      <td style="${expired?'color:var(--red);font-weight:600':''}">${o.valid_until ? fmtDate(o.valid_until) : '—'}</td>
+      <td><button class="action-btn" onclick="viewPdf('${API}/api/offers/${o.id}/pdf','Angebot-${esc(o.offer_number)}.pdf')">↓ PDF</button></td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap;">
+        ${o.status === 'offen' && !expired && !o.archived
+          ? `<button class="action-btn" onclick="convertOffer('${o.id}','${esc(o.offer_number)}')">→ Rechnung</button>
+             <button class="action-btn red" onclick="cancelOffer('${o.id}')">Stornieren</button>`
+          : ''}
+        ${!o.archived && o.status !== 'storniert' ? `<button class="action-btn" title="Erneut senden" onclick="sendDoc('offer','${o.id}','${esc(o.offer_number)}')">✉</button>` : ''}
+        <button class="action-btn" title="${o.archived?'Wiederherstellen':'Archivieren'}" onclick="archiveDoc('offer','${o.id}',${!o.archived})">${o.archived?'↩':'📦'}</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function offerLabel(status, expired) {
+  if (expired && status === 'offen') return 'Abgelaufen';
+  return { offen:'Offen', angenommen:'Angenommen', abgelehnt:'Abgelehnt', abgelaufen:'Abgelaufen', storniert:'Storniert' }[status] || status;
+}
+
+const PRODUCT_CATALOG = {
+  'Quick Start':   { price: 995,  suffix: 'einmalig', items: [
+    { desc: 'Ist-Analyse & Konzeption',       qty: 1, price: 0 },
+    { desc: '1 automatisierter Prozess',      qty: 1, price: 0 },
+    { desc: 'Implementierung & Testing',      qty: 1, price: 0 },
+    { desc: '2 Wochen Nachbetreuung',         qty: 1, price: 0 },
+    { desc: 'DSGVO-Beratung',                 qty: 1, price: 0 },
+    { desc: 'Übergabe-Dokumentation',         qty: 1, price: 995 },
+  ]},
+  'Professional':  { price: 2495, suffix: 'einmalig', items: [
+    { desc: 'Ist-Analyse & Konzeption',       qty: 1, price: 0 },
+    { desc: 'Bis zu 3 automatisierte Prozesse', qty: 1, price: 0 },
+    { desc: 'API-Anbindung & Systemintegration', qty: 1, price: 0 },
+    { desc: 'Multi-System-Integration',       qty: 1, price: 0 },
+    { desc: '4 Wochen Nachbetreuung',         qty: 1, price: 0 },
+    { desc: 'Erweitertes Reporting',          qty: 1, price: 0 },
+    { desc: 'Übergabe inkl. Einführung',      qty: 1, price: 2495 },
+  ]},
+  'Advanced':      { price: 4995, suffix: 'einmalig', items: [
+    { desc: 'Ist-Analyse & Konzeption',       qty: 1, price: 0 },
+    { desc: 'Bis zu 8 Prozesse & Custom KI',  qty: 1, price: 0 },
+    { desc: 'KI-Modell-Entwicklung & Training', qty: 1, price: 0 },
+    { desc: 'Multi-System-Integration',       qty: 1, price: 0 },
+    { desc: '8 Wochen Nachbetreuung',         qty: 1, price: 0 },
+    { desc: 'Vollständige Projektdokumentation', qty: 1, price: 4995 },
+  ]},
+  'Enterprise':    { price: null, suffix: 'individuell', items: [
+    { desc: 'Unbegrenzte Prozessautomatisierung', qty: 1, price: 0 },
+    { desc: 'Vollständige Systemintegration',     qty: 1, price: 0 },
+    { desc: 'Dediziertes Projektmanagement',      qty: 1, price: 0 },
+    { desc: 'Individuelle KI-Roadmap',            qty: 1, price: 0 },
+    { desc: 'Individuelle SLA-Vereinbarung',      qty: 1, price: 0 },
+  ]},
+  'Basis Abo':     { price: 149,  suffix: '/Monat', items: [
+    { desc: 'System-Monitoring',              qty: 1, price: 0 },
+    { desc: 'Fehler-Alerting',                qty: 1, price: 0 },
+    { desc: 'Monatlicher Status-Report',      qty: 1, price: 0 },
+    { desc: 'E-Mail Support (48h Reaktionszeit)', qty: 1, price: 149 },
+  ]},
+  'Standard Abo':  { price: 349,  suffix: '/Monat', items: [
+    { desc: 'System-Monitoring & Fehler-Alerting', qty: 1, price: 0 },
+    { desc: 'Performance-Optimierungen',      qty: 1, price: 0 },
+    { desc: 'Prioritäts-Support (< 24h)',     qty: 1, price: 0 },
+    { desc: 'Quartalsweises Strategie-Gespräch', qty: 1, price: 349 },
+  ]},
+  'Premium Abo':   { price: 699,  suffix: '/Monat', items: [
+    { desc: 'System-Monitoring & Fehler-Alerting', qty: 1, price: 0 },
+    { desc: 'Proaktive Systemoptimierungen',  qty: 1, price: 0 },
+    { desc: 'Direkt-Support (< 4h)',          qty: 1, price: 0 },
+    { desc: 'Monatliches Review-Gespräch',    qty: 1, price: 699 },
+  ]},
+};
+
+function applyOfferTemplate() {
+  const val = document.getElementById('offer-template').value;
+  if (!val || !PRODUCT_CATALOG[val]) return;
+  const catalog = PRODUCT_CATALOG[val];
+  // Positionen leeren
+  document.getElementById('offer-items-body').innerHTML = '';
+  itemCounter = 0;
+  // Jede Paket-Position als Zeile einfügen
+  catalog.items.forEach(item => {
+    const n = ++itemCounter;
+    const tr = document.createElement('tr');
+    tr.id = `item-row-${n}`;
+    tr.innerHTML = `
+      <td class="td-pos"><span style="color:var(--gray);font-size:13px">#</span></td>
+      <td><input type="text"   value="${item.desc}"  class="item-desc"  oninput="recalcTotal()" data-row="${n}"></td>
+      <td class="td-qty"><input type="number" value="${item.qty}" min="0.01" step="0.01" class="item-qty"  oninput="recalcTotal()" data-row="${n}"></td>
+      <td class="td-price"><input type="number" value="${item.price}" min="0" step="0.01" class="item-price" oninput="recalcTotal()" data-row="${n}"></td>
+      <td class="td-del"><button class="del-item" onclick="removeItem(${n})">×</button></td>`;
+    document.getElementById('offer-items-body').appendChild(tr);
+  });
+  recalcTotal();
+  // Notiz mit Paket-Info vorbelegen
+  const suffix = catalog.suffix || '';
+  const priceText = catalog.price ? `${catalog.price.toLocaleString('de-DE')} € ${suffix}` : 'Auf Anfrage';
+  document.getElementById('offer-notes').value = `Paket: ${val} – ${priceText}`;
+}
+
+async function openOfferModal() {
+  document.getElementById('offer-items-body').innerHTML = '';
+  document.getElementById('offer-notes').value          = '';
+  document.getElementById('offer-valid-days').value     = '30';
+  document.getElementById('offer-total-preview').textContent = '0,00 €';
+  document.getElementById('offer-template').value       = '';
+  itemCounter = 0;
+  await populateContactSelect('offer-contact-id');
+  addLineItem();
+  openModal('modal-offer');
+}
+
+let itemCounter = 0;
+function addLineItem() {
+  const n = ++itemCounter;
+  const tr = document.createElement('tr');
+  tr.id = `item-row-${n}`;
+  tr.innerHTML = `
+    <td class="td-pos"><span style="color:var(--gray);font-size:13px">#</span></td>
+    <td><input type="text"   placeholder="Beschreibung…"  class="item-desc"  oninput="recalcTotal()" data-row="${n}"></td>
+    <td class="td-qty"><input type="number" value="1" min="0.01" step="0.01" class="item-qty"  oninput="recalcTotal()" data-row="${n}"></td>
+    <td class="td-price"><input type="number" value="0"  min="0"    step="0.01" class="item-price" oninput="recalcTotal()" data-row="${n}"></td>
+    <td class="td-del"><button class="del-item" onclick="removeItem(${n})">×</button></td>`;
+  document.getElementById('offer-items-body').appendChild(tr);
+  recalcTotal();
+}
+
+function removeItem(n) {
+  document.getElementById(`item-row-${n}`)?.remove();
+  recalcTotal();
+}
+
+function recalcTotal() {
+  const qtys   = [...document.querySelectorAll('.item-qty')];
+  const prices = [...document.querySelectorAll('.item-price')];
+  let total = 0;
+  qtys.forEach((q, i) => { total += parseFloat(q.value||0) * parseFloat(prices[i].value||0); });
+  document.getElementById('offer-total-preview').textContent = `${total.toFixed(2).replace('.',',')} €`;
+}
+
+async function submitOffer() {
+  const contactId = document.getElementById('offer-contact-id').value;
+  const validDays = parseInt(document.getElementById('offer-valid-days').value);
+  const notes     = document.getElementById('offer-notes').value;
+  const descs     = [...document.querySelectorAll('.item-desc')];
+  const qtys      = [...document.querySelectorAll('.item-qty')];
+  const prices    = [...document.querySelectorAll('.item-price')];
+  const lineItems = descs.map((d, i) => ({
+    pos:   i + 1,
+    desc:  d.value.trim(),
+    qty:   parseFloat(qtys[i].value  || 1),
+    price: parseFloat(prices[i].value || 0),
+  })).filter(it => it.desc);
+  if (!lineItems.length) { toast('Mindestens eine Position mit Beschreibung eingeben', 'error'); return; }
+  try {
+    const r = await api('/api/offers', { method:'POST', body: JSON.stringify({ contactId, lineItems, validDays, notes }) });
+    closeModal('modal-offer');
+    toast(`✅ Angebot ${r.offerNumber} erstellt & versendet`);
+    loadOffers();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function convertOffer(id, num) {
+  if (!confirm(`Angebot ${num} in Rechnung umwandeln?`)) return;
+  try {
+    const r = await api(`/api/offers/${id}/convert`, { method:'POST' });
+    toast(`✅ Rechnung ${r.invoiceNumber} erstellt & versendet`);
+    loadOffers(); loadInvoices();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function cancelOffer(id) {
+  if (!confirm('Angebot wirklich stornieren?')) return;
+  await api(`/api/offers/${id}/cancel`, { method:'POST' }).catch(e => toast(e.message,'error'));
+  toast('Angebot storniert');
+  loadOffers();
+}
+
+// ── Expenses ──────────────────────────────────────────────
+let expensesCache = {};
+
+const CAT_LABELS = {
+  software_tools:   'Software & Tools',
+  fahrtkosten:      'Fahrtkosten',
+  buero_material:   'Büro & Material',
+  marketing_website:'Marketing & Website',
+  sonstiges:        'Sonstiges',
+};
+
+async function loadExpenses() {
+  const yearSel = document.getElementById('filter-exp-year');
+  if (yearSel.options.length === 1) {
+    const cur = new Date().getFullYear();
+    for (let y = cur; y >= cur - 3; y--) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y; yearSel.appendChild(o);
+    }
+    yearSel.value = cur;
+  }
+  const year = yearSel.value;
+  const cat  = document.getElementById('filter-exp-cat').value;
+  const qp   = new URLSearchParams();
+  if (year) qp.set('year', year);
+  if (cat)  qp.set('category', cat);
+  const q = qp.toString() ? `?${qp}` : '';
+  const rows  = await api(`/api/expenses${q}`).catch(() => []);
+  const tbody = document.getElementById('expenses-tbody');
+
+  expensesCache = {};
+  rows.forEach(r => { expensesCache[r.id] = r; });
+
+  const byCategory = {};
+  let totalSum = 0;
+  rows.forEach(r => {
+    const amt = parseFloat(r.amount);
+    byCategory[r.category] = (byCategory[r.category] || 0) + amt;
+    totalSum += amt;
+  });
+  document.getElementById('expense-summary').innerHTML = [
+    ...Object.entries(byCategory).map(([cat, sum]) => `
+      <div class="stat-card" style="--c:var(--cyan)">
+        <div class="stat-label">${CAT_LABELS[cat]||cat}</div>
+        <div class="stat-value" style="font-size:20px">${sum.toFixed(2).replace('.',',')} €</div>
+      </div>`),
+    `<div class="stat-card" style="--c:var(--accent)">
+       <div class="stat-label">Gesamt</div>
+       <div class="stat-value" style="font-size:20px">${totalSum.toFixed(2).replace('.',',')} €</div>
+     </div>`,
+  ].join('');
+
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span>💰</span>Keine Ausgaben</div></td></tr>'; return; }
+  tbody.innerHTML = rows.map(e => `<tr>
+    <td>${fmtDate(e.expense_date)}</td>
+    <td><span class="cat-badge cat-${e.category}">${CAT_LABELS[e.category]||e.category}</span></td>
+    <td>${esc(e.description)}</td>
+    <td><strong>${parseFloat(e.amount).toFixed(2).replace('.',',')} €</strong></td>
+    <td style="color:var(--gray);font-size:12px">${esc(e.receipt_ref||'—')}</td>
+    <td>
+      <button class="action-btn" onclick="editExpenseById('${e.id}')">Bearbeiten</button>
+      <button class="action-btn red" onclick="deleteExpense('${e.id}')">Löschen</button>
+    </td>
+  </tr>`).join('');
+}
+
+function openNewExpenseModal() {
+  document.getElementById('expense-edit-id').value = '';
+  document.getElementById('exp-date').value        = new Date().toISOString().split('T')[0];
+  document.getElementById('exp-category').value    = 'software_tools';
+  document.getElementById('exp-description').value = '';
+  document.getElementById('exp-amount').value      = '';
+  document.getElementById('exp-receipt').value     = '';
+  document.getElementById('exp-notes').value       = '';
+  openModal('modal-expense');
+}
+
+function editExpenseById(id) { editExpense(expensesCache[id]); }
+function editExpense(e) {
+  if (!e) return;
+  document.getElementById('expense-edit-id').value = e.id;
+  document.getElementById('exp-date').value        = (e.expense_date||'').split('T')[0];
+  document.getElementById('exp-category').value    = e.category;
+  document.getElementById('exp-description').value = e.description;
+  document.getElementById('exp-amount').value      = e.amount;
+  document.getElementById('exp-receipt').value     = e.receipt_ref || '';
+  document.getElementById('exp-notes').value       = e.notes || '';
+  openModal('modal-expense');
+}
+
+async function submitExpense() {
+  const editId      = document.getElementById('expense-edit-id').value;
+  const expenseDate = document.getElementById('exp-date').value;
+  const category    = document.getElementById('exp-category').value;
+  const description = document.getElementById('exp-description').value.trim();
+  const amount      = document.getElementById('exp-amount').value;
+  const receiptRef  = document.getElementById('exp-receipt').value.trim();
+  const notes       = document.getElementById('exp-notes').value.trim();
+  if (!description || !amount) { toast('Beschreibung und Betrag erforderlich', 'error'); return; }
+  const body = JSON.stringify({ expenseDate, category, description, amount: parseFloat(amount), receiptRef, notes });
+  try {
+    if (editId) {
+      await api(`/api/expenses/${editId}`, { method:'PUT', body });
+    } else {
+      await api('/api/expenses', { method:'POST', body });
+    }
+    closeModal('modal-expense');
+    toast(editId ? '✅ Ausgabe aktualisiert' : '✅ Ausgabe gespeichert');
+    loadExpenses();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteExpense(id) {
+  if (!confirm('Ausgabe wirklich löschen?')) return;
+  await api(`/api/expenses/${id}`, { method:'DELETE' }).catch(e => toast(e.message,'error'));
+  toast('Ausgabe gelöscht');
+  loadExpenses();
+}
+
+// ── Dunning ───────────────────────────────────────────────
+async function loadDunning() {
+  loadDunningCandidates();
+  loadDunningSettings();
+  loadDunningLog();
+}
+
+async function loadDunningCandidates() {
+  const rows  = await api('/api/dunning/candidates').catch(() => []);
+  const tbody = document.getElementById('dunning-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty"><span>✅</span>Keine überfälligen Rechnungen</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const days     = parseInt(r.days_overdue);
+    const eligible = r.eligible_for_level1 || r.eligible_for_level2;
+    const rowClass = eligible ? (r.dunning_level === 1 ? 'dunning-crit' : 'dunning-eligible') : '';
+    return `<tr class="${rowClass}">
+      <td><strong>${esc(r.invoice_number)}</strong></td>
+      <td>${esc(r.contact_name||'—')}</td>
+      <td><strong>${parseFloat(r.amount).toFixed(2).replace('.',',')} €</strong></td>
+      <td style="color:var(--red);font-weight:600">${days} Tag${days!==1?'e':''}</td>
+      <td><span class="badge ${r.dunning_level===0?'pending':'overdue'}">Stufe ${r.dunning_level}</span></td>
+      <td>${eligible
+        ? `<button class="btn-sm" style="font-size:12px;padding:5px 10px" onclick="sendDunning('${r.id}','${esc(r.invoice_number)}',${r.next_dunning_level})">
+             Stufe ${r.next_dunning_level} senden
+           </button>`
+        : `<span style="color:var(--gray);font-size:12px">Noch nicht fällig</span>`}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function sendDunning(invoiceId, num, level) {
+  if (!confirm(`Mahnung Stufe ${level} für Rechnung ${num} versenden?`)) return;
+  try {
+    const r = await api(`/api/dunning/${invoiceId}/send`, { method:'POST' });
+    toast(`✅ Mahnung Stufe ${r.level} versendet${r.fee > 0 ? ` (Gebühr: ${r.fee.toFixed(2)} €)` : ''}`);
+    loadDunning();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function loadDunningSettings() {
+  const s = await api('/api/dunning/settings').catch(() => ({}));
+  if (s.dunning_interval_1) document.getElementById('set-interval1').value = s.dunning_interval_1;
+  if (s.dunning_interval_2) document.getElementById('set-interval2').value = s.dunning_interval_2;
+  if (s.dunning_fee_1)      document.getElementById('set-fee1').value      = s.dunning_fee_1;
+  if (s.dunning_fee_2)      document.getElementById('set-fee2').value      = s.dunning_fee_2;
+  if (s.dunning_active !== undefined) {
+    document.getElementById('set-active').checked = s.dunning_active === 'true';
+  }
+}
+
+async function saveDunningSettings() {
+  const body = JSON.stringify({
+    dunning_interval_1: document.getElementById('set-interval1').value,
+    dunning_interval_2: document.getElementById('set-interval2').value,
+    dunning_fee_1:      document.getElementById('set-fee1').value,
+    dunning_fee_2:      document.getElementById('set-fee2').value,
+    dunning_active:     document.getElementById('set-active').checked ? 'true' : 'false',
+  });
+  try {
+    await api('/api/dunning/settings', { method:'POST', body });
+    toast('✅ Einstellungen gespeichert');
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function loadDunningLog() {
+  const rows  = await api('/api/dunning/log').catch(() => []);
+  const tbody = document.getElementById('dunning-log-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><span>📋</span>Noch keine Mahnungen versendet</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td>${fmtDate(r.created_at)}</td>
+    <td><strong>${esc(r.invoice_number||'—')}</strong></td>
+    <td>${esc(r.contact_name||'—')}</td>
+    <td><span class="badge ${r.level===1?'sent':'overdue'}">Stufe ${r.level}</span></td>
+    <td>${parseFloat(r.fee||0) > 0 ? `${parseFloat(r.fee).toFixed(2)} €` : '—'}</td>
+  </tr>`).join('');
+}
+
+
+// ── Accounting / Buchhaltung ──────────────────────────────
+async function loadAccounting() {
+  const yearSel = document.getElementById('acc-year');
+  if (yearSel.options.length === 0) {
+    const cur = new Date().getFullYear();
+    for (let y = cur; y >= cur - 4; y--) {
+      const o = document.createElement('option');
+      o.value = y; o.textContent = y; yearSel.appendChild(o);
+    }
+    yearSel.value = cur;
+  }
+  const year = yearSel.value;
+  const d = await api(`/api/accounting/eur/${year}`).catch(e => { toast(e.message,'error'); return null; });
+  if (!d) return;
+
+  const fmt = n => `${parseFloat(n||0).toFixed(2).replace('.',',')} €`;
+
+  // KPIs
+  document.getElementById('acc-income').textContent   = fmt(d.einnahmen.total);
+  document.getElementById('acc-expenses').textContent = fmt(d.ausgaben.total);
+  const profitEl = document.getElementById('acc-profit');
+  profitEl.textContent = fmt(d.gewinn);
+  profitEl.className = 'stat-value ' + (d.gewinn >= 0 ? 'acc-positive' : 'acc-negative');
+
+  // Offene Rechnungen (aus loadAll-Daten nicht verfügbar hier, kleiner Aufruf)
+  const allInv = await api('/api/invoices').catch(() => []);
+  document.getElementById('acc-open').textContent =
+    allInv.filter(i => ['sent','pending','overdue'].includes(i.status)).length;
+
+  // Monatsübersicht
+  const monthNames = ['Januar','Februar','März','April','Mai','Juni',
+                      'Juli','August','September','Oktober','November','Dezember'];
+  const tbody = document.getElementById('acc-months-tbody');
+  tbody.innerHTML = monthNames.map((name, i) => {
+    const m   = d.months[i + 1] || {};
+    const inc = m.income   || 0;
+    const exp = m.expenses || 0;
+    const bal = inc - exp;
+    const cls = bal > 0 ? 'acc-positive' : (bal < 0 ? 'acc-negative' : 'acc-neutral');
+    return `<tr>
+      <td>${name} ${year}</td>
+      <td>${inc > 0 ? fmt(inc) : '<span style="color:var(--gray)">—</span>'}</td>
+      <td>${exp > 0 ? '<span style="color:var(--red)">'+fmt(exp)+'</span>' : '<span style="color:var(--gray)">—</span>'}</td>
+      <td><span class="${cls}">${(inc > 0 || exp > 0) ? fmt(bal) : '—'}</span></td>
+    </tr>`;
+  }).join('') + `
+    <tr style="background:var(--dark);color:#F5F7FA;font-weight:700;">
+      <td style="color:#F5F7FA">Jahressumme</td>
+      <td style="color:#00C896">${fmt(d.einnahmen.total)}</td>
+      <td style="color:#fca5a5">${fmt(d.ausgaben.total)}</td>
+      <td style="color:${d.gewinn>=0?'#00C896':'#fca5a5'}">${fmt(d.gewinn)}</td>
+    </tr>`;
+
+  // Kategorien
+  const catBody = document.getElementById('acc-cat-tbody');
+  const cats = Object.entries(d.ausgaben.byCategory || {});
+  if (!cats.length) {
+    catBody.innerHTML = '<tr><td colspan="3"><div class="empty"><span>💰</span>Keine Ausgaben</div></td></tr>';
+  } else {
+    catBody.innerHTML = cats.map(([, v]) =>
+      `<tr>
+        <td>${v.label}</td>
+        <td><strong>${fmt(v.sum)}</strong></td>
+        <td style="color:var(--gray);font-size:12px">${d.ausgaben.total > 0 ? Math.round((v.sum/d.ausgaben.total)*100) : 0} %</td>
+      </tr>`
+    ).join('');
+  }
+
+  // Rechnungsjournal
+  const invBody = document.getElementById('acc-inv-tbody');
+  const invs    = (d.einnahmen.invoices || []).slice().reverse().slice(0, 20);
+  if (!invs.length) {
+    invBody.innerHTML = '<tr><td colspan="5"><div class="empty"><span>📄</span>Keine Rechnungen</div></td></tr>';
+  } else {
+    invBody.innerHTML = invs.map(i => `<tr>
+      <td><strong>${esc(i.invoice_number)}</strong></td>
+      <td style="font-size:12px;color:var(--gray)">${fmtDate(i.paid_at || i.created_at)}</td>
+      <td>${esc(i.contact_name||'—')}</td>
+      <td><strong>${fmt(i.amount)}</strong></td>
+      <td><span class="badge paid">Bezahlt</span></td>
+    </tr>`).join('');
+  }
+}
+
+async function dlEUR() {
+  const year = document.getElementById('acc-year').value;
+  await downloadFile(`/api/accounting/eur/${year}/pdf`, `EÜR-Flowturai-${year}.pdf`);
+}
+
+async function dlCSV(type) {
+  const year = document.getElementById('acc-year').value;
+  const names = {
+    einnahmen:        `Einnahmen-Flowturai-${year}.csv`,
+    ausgaben:         `Ausgaben-Flowturai-${year}.csv`,
+    rechnungsjournal: `Rechnungsjournal-Flowturai-${year}.csv`,
+    angebotsjournal:  `Angebotsjournal-Flowturai-${year}.csv`,
+  };
+  await downloadFile(`/api/accounting/export/${type}/${year}`, names[type]);
+}
+
+async function downloadFile(url, filename) {
+  try {
+    const res = await fetch(`${API}${url}`, { headers: { 'x-admin-key': AKEY } });
+    if (!res.ok) { toast('Download fehlgeschlagen', 'error'); return; }
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  } catch (e) { toast('Download-Fehler: ' + e.message, 'error'); }
+}
+
+async function cancelInvoice(id, num) {
+  if (!confirm(`Rechnung ${num} wirklich stornieren?\nEs wird eine Stornorechnung mit neuer Nummer erstellt.`)) return;
+  try {
+    const r = await api(`/api/invoice/${id}/cancel`, { method: 'POST' });
+    toast(`✅ Storniert: ${r.cancellationNumber} | Stornorechnung: ${r.stornoInvoiceNumber}`);
+    loadInvoices(); loadAll();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Verträge ──────────────────────────────────────────────
+async function loadContracts() {
+  const showArchived = document.getElementById('ct-show-archived')?.checked;
+  const q     = showArchived ? '?archived=true' : '';
+  const rows  = await api(`/api/contracts${q}`).catch(() => []);
+  const tbody = document.getElementById('contracts-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><span>📜</span>Keine Verträge</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(ct => `<tr${ct.archived ? ' style="opacity:.5"' : ''}>
+    <td><strong>${esc(ct.contract_number)}</strong>${ct.archived ? ' <span style="font-size:10px;color:var(--gray)">[Archiv]</span>' : ''}</td>
+    <td>${esc(ct.contact_name||'—')}${ct.company?`<br><small style="color:var(--gray)">${esc(ct.company)}</small>`:''}</td>
+    <td><span class="badge ${ct.type==='implementierung'?'sent':'stufe4'}">${ct.type==='implementierung'?'Implementierung':'Betreuung'}</span></td>
+    <td><strong>${parseFloat(ct.amount||0).toFixed(2).replace('.',',')} €</strong>${ct.type==='betreuung'?'<small style="color:var(--gray)"> /Mo</small>':''}</td>
+    <td><span class="badge ${ct.status}">${{aktiv:'Aktiv',beendet:'Beendet',storniert:'Storniert'}[ct.status]||ct.status}</span></td>
+    <td>${ct.start_date ? fmtDate(ct.start_date) : '—'}</td>
+    <td style="display:flex;gap:4px;flex-wrap:wrap;">
+      <button class="action-btn" onclick="viewPdf('${API}/api/contracts/${ct.id}/pdf','Vertrag-${esc(ct.contract_number)}.pdf')">↓ PDF</button>
+      ${!ct.archived ? `<button class="action-btn" title="Erneut senden" onclick="sendDoc('contract','${ct.id}','${esc(ct.contract_number)}')">✉</button>` : ''}
+      ${ct.status==='aktiv' && !ct.archived ?`<button class="action-btn red" onclick="cancelContract('${ct.id}')">Beenden</button>`:''}
+      <button class="action-btn" title="${ct.archived?'Wiederherstellen':'Archivieren'}" onclick="archiveDoc('contract','${ct.id}',${!ct.archived})">${ct.archived?'↩':'📦'}</button>
+    </td>
+  </tr>`).join('');
+}
+
+async function openContractModal(preContactId = '') {
+  document.getElementById('ct-amount').value     = '';
+  document.getElementById('ct-notes').value      = '';
+  document.getElementById('ct-type').value       = 'betreuung';
+  document.getElementById('ct-start-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ct-send-email').checked = true;
+  document.getElementById('ct-offer-id').innerHTML = '<option value="">— Kein Angebot —</option>';
+  await populateContactSelect('ct-contact-id', preContactId);
+  if (preContactId) await loadOffersForContract();
+  openModal('modal-contract');
+}
+
+async function loadOffersForContract() {
+  const contactId = document.getElementById('ct-contact-id').value;
+  const sel = document.getElementById('ct-offer-id');
+  sel.innerHTML = '<option value="">— Kein Angebot —</option>';
+  if (!contactId) return;
+  try {
+    const offers = await api(`/api/offers`);
+    const contactOffers = offers.filter(o => o.contact_id === contactId && o.status === 'offen');
+    contactOffers.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.id;
+      opt.dataset.amount = o.amount;
+      opt.dataset.notes  = o.description || o.notes || '';
+      opt.textContent = `${o.offer_number} – ${parseFloat(o.amount).toFixed(2).replace('.',',')} €`;
+      sel.appendChild(opt);
+    });
+  } catch (_) {}
+}
+
+function applyOfferToContract() {
+  const sel = document.getElementById('ct-offer-id');
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) return;
+  if (opt.dataset.amount) document.getElementById('ct-amount').value = opt.dataset.amount;
+  if (opt.dataset.notes)  document.getElementById('ct-notes').value  = opt.dataset.notes;
+}
+
+async function submitContract() {
+  const contactId = document.getElementById('ct-contact-id').value;
+  const offerId   = document.getElementById('ct-offer-id').value || null;
+  const type      = document.getElementById('ct-type').value;
+  const amount    = document.getElementById('ct-amount').value;
+  const startDate = document.getElementById('ct-start-date').value;
+  const notes     = document.getElementById('ct-notes').value.trim();
+  const doSend    = document.getElementById('ct-send-email').checked;
+  if (!amount) { toast('Betrag eingeben', 'error'); return; }
+  try {
+    const r = await api('/api/contracts', {
+      method: 'POST',
+      body: JSON.stringify({ contactId, offerId, type, amount: parseFloat(amount), startDate, notes, sendEmail: doSend }),
+    });
+    closeModal('modal-contract');
+    toast(`✅ Vertrag ${r.contractNumber} erstellt`);
+    loadContracts();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+async function cancelContract(id) {
+  if (!confirm('Vertrag wirklich beenden?')) return;
+  await api(`/api/contracts/${id}/cancel`, { method: 'POST' }).catch(e => toast(e.message, 'error'));
+  toast('Vertrag beendet');
+  loadContracts();
+}
+
+// ── Posteingang ───────────────────────────────────────────
+async function loadInboxLog() {
+  const rows  = await api('/api/inbox').catch(() => []);
+  const tbody = document.getElementById('inbox-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><span>📬</span>Noch keine verarbeiteten Mails</div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(r => {
+    const isAccepted  = r.action && r.action.startsWith('angebot_angenommen');
+    const isSonstiges = r.action === 'sonstiges' || r.action === 'unbekannt';
+    const badgeCls    = isAccepted ? 'angenommen' : isSonstiges ? 'pending' : 'sent';
+    return `<tr>
+      <td style="font-size:12px;color:var(--gray)">${fmtDate(r.processed_at)}</td>
+      <td style="font-size:13px">${esc(r.from_email||'—')}</td>
+      <td style="font-size:13px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(r.subject||'')}">${esc(r.subject||'—')}</td>
+      <td><span class="badge ${badgeCls}" style="font-size:11px">${esc(r.action||'—')}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+async function triggerInboxCheck() {
+  toast('⏳ Prüfe Posteingang…');
+  try {
+    await api('/api/inbox/check', { method: 'POST' });
+    toast('✅ Posteingang geprüft');
+    loadInboxLog();
+  } catch (e) { toast('Fehler: ' + e.message, 'error'); }
+}
+
+// ── PDF-Download ───────────────────────────────────────────
+function viewPdf(url, filename) {
+  fetch(url, { headers: { 'x-admin-key': AKEY } })
+    .then(r => { if (!r.ok) throw new Error('PDF nicht erreichbar'); return r.blob(); })
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    })
+    .catch(e => toast('PDF-Fehler: ' + e.message, 'error'));
+}
+
+// ── Kunden-Detailansicht ──────────────────────────────────
+let _detailContactId = null;
+let _detailDocs      = null;
+
+async function openContactDetail(contactId) {
+  _detailContactId = contactId;
+  _detailDocs      = null;
+
+  switchDetailTab('info');
+
+  const contacts = await api('/api/contacts').catch(() => []);
+  const c = contacts.find(x => x.id === contactId);
+  if (!c) { toast('Kontakt nicht gefunden', 'error'); return; }
+
+  document.getElementById('detail-name').textContent  = c.name;
+  document.getElementById('detail-meta').textContent  = [c.company, c.industry].filter(Boolean).join(' · ') || c.email;
+  document.getElementById('d-email').innerHTML        = `<a href="mailto:${esc(c.email)}" style="color:var(--blue-l)">${esc(c.email)}</a>`;
+  document.getElementById('d-phone').textContent      = c.phone    || '—';
+  document.getElementById('d-company').textContent    = c.company  || '—';
+  document.getElementById('d-industry').textContent   = c.industry || '—';
+  document.getElementById('d-status').innerHTML       = `<span class="badge ${c.status}">${stageLabel(c.status)}</span>`;
+  document.getElementById('d-since').textContent      = fmtDate(c.created_at);
+  document.getElementById('d-notes').textContent      = c.notes    || '(keine Notizen)';
+  // Anschrift
+  const addrParts = [c.address, c.city].filter(Boolean);
+  document.getElementById('d-address').textContent    = addrParts.length ? addrParts.join(', ') : '—';
+  // Wunschtermin async laden
+  document.getElementById('d-appointment').textContent = '…';
+  api(`/api/appointments/${contactId}`).then(appts => {
+    const next = appts && appts[0];
+    document.getElementById('d-appointment').textContent = next
+      ? new Date(next.scheduled_at).toLocaleDateString('de-DE') + ' (Wunsch)'
+      : '—';
+  }).catch(() => { document.getElementById('d-appointment').textContent = '—'; });
+
+  document.getElementById('d-btn-stage').onclick    = () => { closeModal('modal-contact-detail'); openStageModal(c.id, c.status); };
+  document.getElementById('d-btn-invoice').onclick  = () => { closeModal('modal-contact-detail'); openModal('modal-invoice'); populateContactSelect('inv-contact-id', c.id); };
+  document.getElementById('d-btn-offer').onclick    = async () => { closeModal('modal-contact-detail'); await openOfferModal(); document.getElementById('offer-contact-id').value = c.id; };
+  document.getElementById('d-btn-contract').onclick = () => { closeModal('modal-contact-detail'); openContractModal(c.id); };
+
+  openModal('modal-contact-detail');
+
+  // Docs parallel laden
+  _detailDocs = api(`/api/contacts/${contactId}/documents`)
+    .catch(() => ({ invoices: [], offers: [], contracts: [] }));
+}
+
+function switchDetailTab(tab) {
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.detail-tab-content').forEach(c => { c.style.display = 'none'; });
+  document.getElementById(`detail-tab-${tab}`).style.display = 'block';
+
+  if (tab !== 'info' && _detailDocs) {
+    _detailDocs.then(docs => renderDetailDocs(tab, docs));
+  }
+}
+
+function renderDetailDocs(tab, docs) {
+  if (tab === 'invoices') {
+    const el   = document.getElementById('detail-invoices-list');
+    const rows = docs.invoices || [];
+    if (!rows.length) { el.innerHTML = '<div class="empty"><span>📄</span>Keine Rechnungen</div>'; return; }
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse"><thead><tr style="background:var(--bg)">
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Nummer</th>
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Betrag</th>
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Status</th>
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Fällig</th>
+      <th></th></tr></thead><tbody>
+      ${rows.map(i => `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:8px"><strong>${esc(i.invoice_number)}</strong></td>
+        <td style="padding:8px"><strong>${parseFloat(i.amount).toFixed(2).replace('.',',')} €</strong></td>
+        <td style="padding:8px"><span class="badge ${i.status}">${invLabel(i.status)}</span></td>
+        <td style="padding:8px;font-size:12px">${i.due_date?fmtDate(i.due_date):'—'}</td>
+        <td style="padding:8px"><button class="action-btn" onclick="viewPdf('${API}/api/invoice/${i.id}/pdf','Rechnung-${esc(i.invoice_number)}.pdf')">↓ PDF</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  if (tab === 'offers') {
+    const el   = document.getElementById('detail-offers-list');
+    const rows = docs.offers || [];
+    if (!rows.length) { el.innerHTML = '<div class="empty"><span>📋</span>Keine Angebote</div>'; return; }
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse"><thead><tr style="background:var(--bg)">
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Nummer</th>
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Betrag</th>
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Status</th>
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Gültig bis</th>
+      <th></th></tr></thead><tbody>
+      ${rows.map(o => { const exp = o.status==='offen'&&new Date(o.valid_until)<new Date(); return `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:8px"><strong>${esc(o.offer_number)}</strong></td>
+        <td style="padding:8px"><strong>${parseFloat(o.amount).toFixed(2).replace('.',',')} €</strong></td>
+        <td style="padding:8px"><span class="badge ${exp?'abgelaufen':o.status}">${offerLabel(o.status,exp)}</span></td>
+        <td style="padding:8px;font-size:12px">${o.valid_until?fmtDate(o.valid_until):'—'}</td>
+        <td style="padding:8px"><button class="action-btn" onclick="viewPdf('${API}/api/offers/${o.id}/pdf','Angebot-${esc(o.offer_number)}.pdf')">↓ PDF</button></td>
+      </tr>`; }).join('')}
+    </tbody></table>`;
+  }
+
+  if (tab === 'contracts') {
+    const el   = document.getElementById('detail-contracts-list');
+    const rows = docs.contracts || [];
+    if (!rows.length) { el.innerHTML = '<div class="empty"><span>📜</span>Keine Verträge</div>'; return; }
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse"><thead><tr style="background:var(--bg)">
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Nummer</th>
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Typ</th>
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Betrag</th>
+      <th style="padding:8px;font-size:11px;text-align:left;color:var(--gray)">Status</th>
+      <th></th></tr></thead><tbody>
+      ${rows.map(ct => `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:8px"><strong>${esc(ct.contract_number)}</strong></td>
+        <td style="padding:8px;font-size:12px">${ct.type==='implementierung'?'Implementierung':'Betreuung'}</td>
+        <td style="padding:8px"><strong>${parseFloat(ct.amount||0).toFixed(2).replace('.',',')} €</strong></td>
+        <td style="padding:8px"><span class="badge ${ct.status}">${{aktiv:'Aktiv',beendet:'Beendet',storniert:'Storniert'}[ct.status]||ct.status}</span></td>
+        <td style="padding:8px"><button class="action-btn" onclick="viewPdf('${API}/api/contracts/${ct.id}/pdf','Vertrag-${esc(ct.contract_number)}.pdf')">↓ PDF</button></td>
+      </tr>`).join('')}
+    </tbody></table>`;
+  }
+}
+
+// ── Kontakt bearbeiten ────────────────────────────────────
+function openEditContactModal(idOrObj) {
+  const c = typeof idOrObj === 'string' ? _contactsCache[idOrObj] : idOrObj;
+  if (!c) { toast('Kontakt nicht gefunden', 'error'); return; }
+  document.getElementById('ec-id').value       = c.id;
+  document.getElementById('ec-name').value     = c.name     || '';
+  document.getElementById('ec-email').value    = c.email    || '';
+  document.getElementById('ec-phone').value    = c.phone    || '';
+  document.getElementById('ec-company').value  = c.company  || '';
+  document.getElementById('ec-address').value  = c.address  || '';
+  document.getElementById('ec-city').value     = c.city     || '';
+  document.getElementById('ec-industry').value = c.industry || '';
+  document.getElementById('ec-notes').value    = c.notes    || '';
+  openModal('modal-edit-contact');
+}
+
+async function submitEditContact() {
+  const id      = document.getElementById('ec-id').value;
+  const name    = document.getElementById('ec-name').value.trim();
+  const email   = document.getElementById('ec-email').value.trim();
+  const phone   = document.getElementById('ec-phone').value.trim();
+  const company = document.getElementById('ec-company').value.trim();
+  const address = document.getElementById('ec-address').value.trim();
+  const city    = document.getElementById('ec-city').value.trim();
+  const industry= document.getElementById('ec-industry').value;
+  const notes   = document.getElementById('ec-notes').value.trim();
+  if (!name) { toast('Name ist ein Pflichtfeld', 'error'); return; }
+  try {
+    await api(`/api/contacts/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name, email, phone, company, address, city, industry, notes }),
+    });
+    closeModal('modal-edit-contact');
+    toast('✅ Kontakt aktualisiert');
+    loadContacts();
+  } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Dokument manuell senden ───────────────────────────────
+async function sendDoc(type, id, num) {
+  const labels = { invoice:'Rechnung', offer:'Angebot', contract:'Vertrag' };
+  const paths  = { invoice:`/api/invoice/${id}/send`, offer:`/api/offers/${id}/send`, contract:`/api/contracts/${id}/send` };
+  if (!confirm(`${labels[type]} ${num} erneut per E-Mail senden?`)) return;
+  try {
+    await api(paths[type], { method: 'POST' });
+    toast(`✅ ${labels[type]} ${num} wurde erneut versendet`);
+  } catch (e) { toast('Fehler: ' + e.message, 'error'); }
+}
+
+// ── Helpers ───────────────────────────────────────────────
+const esc      = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtDate  = d => new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+const stageLabel = s => ({lead:'Lead',stufe1:'Stufe 1',stufe2:'Stufe 2',stufe3:'Stufe 3',stufe4:'Abo',abgeschlossen:'✓ Done',verloren:'Verloren'}[s]||s);
+const invLabel   = s => ({pending:'Ausstehend',sent:'Versendet',paid:'Bezahlt',overdue:'Überfällig',cancelled:'Storniert'}[s]||s);
+let toastTimer;
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = `show ${type}`;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+</script>
+</body>
+</html>
