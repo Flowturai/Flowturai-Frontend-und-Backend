@@ -259,7 +259,7 @@ export default function PricingSection() {
           customVariants={revealVariants}
           className="text-slate-600 text-base mx-auto max-w-xl"
         >
-          Einmalige Integration nach Ihrem Bedarf – danach optional günstige laufende Betreuung. Alle Preise zzgl. MwSt., DSGVO-konform.
+          Einmalige Integration nach Ihrem Bedarf – danach optional günstige laufende Betreuung. DSGVO-konform. Gemäß §19 UStG wird keine Umsatzsteuer ausgewiesen.
         </TimelineContent>
       </div>
 
