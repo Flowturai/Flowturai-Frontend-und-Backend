@@ -15,7 +15,7 @@ const PACKAGES = [
 ];
 
 const contactInfo = [
-  { icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M2.5 5.833C2.5 5.373 2.873 5 3.333 5h2.834c.184 0 .36.067.497.188l2.5 2.199a.833.833 0 010 1.237L7.25 10.25c.34.737.795 1.42 1.354 2.02.6.559 1.283 1.013 2.02 1.354l1.626-1.914a.833.833 0 011.237 0l2.199 2.5c.121.137.188.313.188.497v2.834a.833.833 0 01-.833.833c-8.284 0-12.5-4.216-12.5-12.5z"/></svg>, label:"Telefon", value:"+49 (0) 15228352609", href:"tel:+4915228352609" },
+  { icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M2.5 5.833C2.5 5.373 2.873 5 3.333 5h2.834c.184 0 .36.067.497.188l2.5 2.199a.833.833 0 010 1.237L7.25 10.25c.34.737.795 1.42 1.354 2.02.6.559 1.283 1.013 2.02 1.354l1.626-1.914a.833.833 0 011.237 0l2.199 2.5c.121.137.188.313.188.497v2.834a.833.833 0 01-.833.833c-8.284 0-12.5-4.216-12.5-12.5z"/></svg>, label:"Telefon", value:"+49 152 28352609", href:"tel:+4915228352609" },
   { icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M2.5 5h15l-7.5 7L2.5 5z"/><path d="M2.5 5v10h15V5"/></svg>, label:"E-Mail", value:"info@flowturai.de", href:"mailto:info@flowturai.de" },
   { icon: <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><circle cx="10" cy="8" r="3"/><path d="M10 2a6 6 0 016 6c0 4-6 10-6 10S4 12 4 8a6 6 0 016-6z"/></svg>, label:"Standort", value:"Deutschland", href:null },
 ];

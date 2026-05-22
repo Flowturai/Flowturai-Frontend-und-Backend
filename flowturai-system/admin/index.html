@@ -266,6 +266,7 @@
   </style>
 </head>
 <body>
+<main id="app-root">
 
 <!-- Staging Banner -->
 <div id="staging-banner">
@@ -278,8 +279,8 @@
   <div class="login-box">
     <h1>Flowturai</h1>
     <p>Admin-Dashboard</p>
-    <input class="login-input" type="text"     id="api-url-input"  placeholder="Server-URL  (z.B. https://flowturai.de)" autocomplete="off">
-    <input class="login-input" type="password" id="admin-key-input" placeholder="Admin-Passwort" autocomplete="current-password">
+    <input class="login-input" type="text"     id="api-url-input"  placeholder="Server-URL  (z.B. https://flowturai.de)" autocomplete="off" aria-label="Server-URL">
+    <input class="login-input" type="password" id="admin-key-input" placeholder="Admin-Passwort" autocomplete="current-password" aria-label="Admin-Passwort">
     <p class="login-hint">Wird nur einmalig auf diesem Gerät gespeichert.</p>
     <button class="btn-primary" onclick="login()">Anmelden</button>
     <div id="login-error">Falsches Passwort oder Server nicht erreichbar.</div>
@@ -369,7 +370,7 @@
         <div class="section-header">
           <h3>Alle Kontakte</h3>
           <div style="display:flex;gap:8px;align-items:center;">
-            <select class="filter-select" id="filter-status" onchange="loadContacts()">
+            <select class="filter-select" id="filter-status" onchange="loadContacts()" aria-label="Kontaktstatus filtern">
               <option value="">Alle Status</option>
               <option value="lead">Lead</option>
               <option value="stufe1">Stufe 1</option>
@@ -417,7 +418,7 @@
             <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--gray);cursor:pointer;">
               <input type="checkbox" id="offer-show-archived" onchange="loadOffers()" style="accent-color:var(--accent)"> Archivierte anzeigen
             </label>
-            <select class="filter-select" id="filter-offer-status" onchange="loadOffers()">
+            <select class="filter-select" id="filter-offer-status" onchange="loadOffers()" aria-label="Angebotsstatus filtern">
               <option value="">Alle Status</option>
               <option value="offen">Offen</option>
               <option value="angenommen">Angenommen</option>
@@ -441,10 +442,10 @@
         <div class="section-header">
           <h3>Betriebsausgaben</h3>
           <div style="display:flex;gap:8px;align-items:center;">
-            <select class="filter-select" id="filter-exp-year" onchange="loadExpenses()">
+            <select class="filter-select" id="filter-exp-year" onchange="loadExpenses()" aria-label="Ausgabenjahr filtern">
               <option value="">Alle Jahre</option>
             </select>
-            <select class="filter-select" id="filter-exp-cat" onchange="loadExpenses()">
+            <select class="filter-select" id="filter-exp-cat" onchange="loadExpenses()" aria-label="Ausgabenkategorie filtern">
               <option value="">Alle Kategorien</option>
               <option value="software_tools">Software & Tools</option>
               <option value="fahrtkosten">Fahrtkosten</option>
@@ -485,19 +486,19 @@
           <div class="settings-grid">
             <div class="form-group">
               <label>1. Mahnung nach X Tagen (ab Fälligkeit)</label>
-              <input type="number" id="set-interval1" value="14" min="1" max="90">
+              <input type="number" id="set-interval1" value="14" min="1" max="90" aria-label="Mahnstufe 1: Intervall in Tagen">
             </div>
             <div class="form-group">
               <label>2. Mahnung nach X Tagen (ab Fälligkeit)</label>
-              <input type="number" id="set-interval2" value="28" min="1" max="180">
+              <input type="number" id="set-interval2" value="28" min="1" max="180" aria-label="Mahnstufe 2: Intervall in Tagen">
             </div>
             <div class="form-group">
               <label>Mahngebühr Stufe 1 (€, 0 = keine)</label>
-              <input type="number" id="set-fee1" value="0" min="0" step="0.01">
+              <input type="number" id="set-fee1" value="0" min="0" step="0.01" aria-label="Mahnstufe 1: Gebühr in Euro">
             </div>
             <div class="form-group">
               <label>Mahngebühr Stufe 2 (€, 0 = keine)</label>
-              <input type="number" id="set-fee2" value="0" min="0" step="0.01">
+              <input type="number" id="set-fee2" value="0" min="0" step="0.01" aria-label="Mahnstufe 2: Gebühr in Euro">
             </div>
           </div>
           <div class="toggle-wrap" style="margin-top:4px;">
@@ -528,7 +529,7 @@
         <div class="section-header" style="flex-wrap:wrap;gap:10px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <h3>EÜR</h3>
-            <select class="filter-select" id="acc-year" onchange="loadAccounting()" style="font-weight:700;">
+            <select class="filter-select" id="acc-year" onchange="loadAccounting()" style="font-weight:700;" aria-label="Buchhaltungsjahr auswählen">
             </select>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;" id="acc-dl-buttons">
@@ -1525,8 +1526,8 @@ function applyOfferTemplate() {
     tr.innerHTML = `
       <td class="td-pos"><span style="color:var(--gray);font-size:13px">#</span></td>
       <td><input type="text"   value="${item.desc}"  class="item-desc"  oninput="recalcTotal()" data-row="${n}"></td>
-      <td class="td-qty"><input type="number" value="${item.qty}" min="0.01" step="0.01" class="item-qty"  oninput="recalcTotal()" data-row="${n}"></td>
-      <td class="td-price"><input type="number" value="${item.price}" min="0" step="0.01" class="item-price" oninput="recalcTotal()" data-row="${n}"></td>
+      <td class="td-qty"><input type="number" value="${item.qty}" min="0.01" step="0.01" class="item-qty"  oninput="recalcTotal()" data-row="${n}" aria-label="Menge Position ${n+1}"></td>
+      <td class="td-price"><input type="number" value="${item.price}" min="0" step="0.01" class="item-price" oninput="recalcTotal()" data-row="${n}" aria-label="Preis Position ${n+1}"></td>
       <td class="td-del"><button class="del-item" onclick="removeItem(${n})">×</button></td>`;
     document.getElementById('offer-items-body').appendChild(tr);
   });
@@ -1557,8 +1558,8 @@ function addLineItem() {
   tr.innerHTML = `
     <td class="td-pos"><span style="color:var(--gray);font-size:13px">#</span></td>
     <td><input type="text"   placeholder="Beschreibung…"  class="item-desc"  oninput="recalcTotal()" data-row="${n}"></td>
-    <td class="td-qty"><input type="number" value="1" min="0.01" step="0.01" class="item-qty"  oninput="recalcTotal()" data-row="${n}"></td>
-    <td class="td-price"><input type="number" value="0"  min="0"    step="0.01" class="item-price" oninput="recalcTotal()" data-row="${n}"></td>
+    <td class="td-qty"><input type="number" value="1" min="0.01" step="0.01" class="item-qty"  oninput="recalcTotal()" data-row="${n}" aria-label="Menge neue Position"></td>
+    <td class="td-price"><input type="number" value="0"  min="0"    step="0.01" class="item-price" oninput="recalcTotal()" data-row="${n}" aria-label="Preis neue Position"></td>
     <td class="td-del"><button class="del-item" onclick="removeItem(${n})">×</button></td>`;
   document.getElementById('offer-items-body').appendChild(tr);
   recalcTotal();
@@ -2263,5 +2264,6 @@ function toast(msg, type='success') {
 }
 
 </script>
+</main>
 </body>
 </html>

@@ -1,5 +1,6 @@
 "use client";
 import React, { useRef, useEffect } from "react";
+import ShaderBackground from "@/components/ui/shader-background";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface HeroProps {
@@ -271,19 +272,13 @@ const AnimatedShaderHero: React.FC<HeroProps> = ({
   stats,
   className = "",
 }) => {
-  const canvasRef = useShaderBackground();
-
   return (
     <div className={`relative w-full h-screen overflow-hidden bg-black ${className}`}>
-      {/* WebGL canvas */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full touch-none"
-        style={{ background: "black" }}
-      />
+      {/* Wave shader background */}
+      <ShaderBackground className="absolute inset-0 w-full h-full touch-none" />
 
       {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-black/40" />
+      <div className="absolute inset-0 bg-black/30" />
 
       {/* Content */}
       <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-white pt-16 px-4">
@@ -293,44 +288,46 @@ const AnimatedShaderHero: React.FC<HeroProps> = ({
             <div
               className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm backdrop-blur-md"
               style={{
-                background: "rgba(139,69,19,0.25)",
-                border: "1px solid rgba(196,149,106,0.4)",
+                background: "rgba(37,99,235,0.2)",
+                border: "1px solid rgba(147,197,253,0.4)",
               }}
             >
               {trustBadge.icon && (
-                <span style={{ color: "#FFD700" }}>{trustBadge.icon}</span>
+                <span style={{ color: "#93c5fd" }}>{trustBadge.icon}</span>
               )}
-              <span style={{ color: "#FFE4C4" }}>{trustBadge.text}</span>
+              <span style={{ color: "#e0f2fe" }}>{trustBadge.text}</span>
             </div>
           </div>
         )}
 
         {/* Headline */}
         <div className="text-center space-y-2 mb-6 max-w-5xl">
-          <h1
-            className="text-5xl md:text-7xl lg:text-[80px] font-bold bg-clip-text text-transparent hero-fade-up hero-delay-200 hero-gradient-text leading-tight"
-            style={{
-              backgroundImage:
-                "linear-gradient(90deg, #FFD700, #FFA500, #c4956a, #FFD700)",
-            }}
-          >
-            {headline.line1}
-          </h1>
-          <h1
-            className="text-5xl md:text-7xl lg:text-[80px] font-bold bg-clip-text text-transparent hero-fade-up hero-delay-400 hero-gradient-text leading-tight"
-            style={{
-              backgroundImage:
-                "linear-gradient(90deg, #FFA500, #8b4513, #c4956a, #FFA500)",
-            }}
-          >
-            {headline.line2}
+          <h1 className="text-5xl md:text-7xl lg:text-[80px] font-bold leading-tight">
+            <span
+              className="block bg-clip-text text-transparent hero-fade-up hero-delay-200 hero-gradient-text"
+              style={{
+                backgroundImage:
+                  "linear-gradient(90deg, #ffffff, #bfdbfe, #93c5fd, #ffffff)",
+              }}
+            >
+              {headline.line1}
+            </span>
+            <span
+              className="block bg-clip-text text-transparent hero-fade-up hero-delay-400 hero-gradient-text"
+              style={{
+                backgroundImage:
+                  "linear-gradient(90deg, #60a5fa, #3b82f6, #93c5fd, #60a5fa)",
+              }}
+            >
+              {headline.line2}
+            </span>
           </h1>
         </div>
 
         {/* Subtitle */}
         <p
           className="max-w-2xl text-center text-lg md:text-xl font-light leading-relaxed hero-fade-up hero-delay-600 mb-10"
-          style={{ color: "rgba(255,228,196,0.9)" }}
+          style={{ color: "rgba(224,242,254,0.9)" }}
         >
           {subtitle}
         </p>
@@ -343,17 +340,17 @@ const AnimatedShaderHero: React.FC<HeroProps> = ({
                 onClick={buttons.primary.onClick}
                 className="px-8 py-4 rounded-full font-semibold text-base transition-all duration-300 hover:scale-105 hover:shadow-2xl"
                 style={{
-                  background: "linear-gradient(135deg, #c4956a, #8b4513)",
+                  background: "linear-gradient(135deg, #2563eb, #1d4ed8)",
                   color: "#fff",
-                  boxShadow: "0 4px 24px rgba(139,69,19,0.4)",
+                  boxShadow: "0 4px 24px rgba(37,99,235,0.5)",
                 }}
                 onMouseEnter={(e) =>
                   (e.currentTarget.style.boxShadow =
-                    "0 8px 32px rgba(139,69,19,0.6)")
+                    "0 8px 32px rgba(37,99,235,0.7)")
                 }
                 onMouseLeave={(e) =>
                   (e.currentTarget.style.boxShadow =
-                    "0 4px 24px rgba(139,69,19,0.4)")
+                    "0 4px 24px rgba(37,99,235,0.5)")
                 }
               >
                 {buttons.primary.text}
@@ -364,9 +361,9 @@ const AnimatedShaderHero: React.FC<HeroProps> = ({
                 onClick={buttons.secondary.onClick}
                 className="px-8 py-4 rounded-full font-semibold text-base transition-all duration-300 hover:scale-105 backdrop-blur-sm"
                 style={{
-                  background: "rgba(139,69,19,0.15)",
-                  border: "1px solid rgba(196,149,106,0.4)",
-                  color: "#FFE4C4",
+                  background: "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(147,197,253,0.4)",
+                  color: "#e0f2fe",
                 }}
               >
                 {buttons.secondary.text}
@@ -385,18 +382,18 @@ const AnimatedShaderHero: React.FC<HeroProps> = ({
               <div key={i} className="flex items-center gap-2.5">
                 <div
                   className="w-1 h-10 rounded-full"
-                  style={{ background: "linear-gradient(to bottom, #FFD700, #8b4513)" }}
+                  style={{ background: "linear-gradient(to bottom, #60a5fa, #2563eb)" }}
                 />
                 <div>
                   <div
                     className="font-heading text-2xl font-bold leading-none"
-                    style={{ color: "#FFD700" }}
+                    style={{ color: "#93c5fd" }}
                   >
                     {stat.value}
                   </div>
                   <div
                     className="text-xs font-medium mt-0.5"
-                    style={{ color: "rgba(255,228,196,0.7)" }}
+                    style={{ color: "rgba(186,230,253,0.7)" }}
                   >
                     {stat.label}
                   </div>

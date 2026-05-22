@@ -2,16 +2,15 @@ import Link from "next/link";
 
 const footerLinks = {
   Leistungen: [
-    { label: "KI-Strategie & Beratung", href: "#leistungen" },
-    { label: "KI-Implementierung",      href: "#leistungen" },
-    { label: "Prozessautomatisierung",  href: "#leistungen" },
-    { label: "Datenanalyse",            href: "#leistungen" },
+    { label: "KI-Strategie & Beratung", href: "/#leistungen" },
+    { label: "KI-Implementierung",      href: "/#leistungen" },
+    { label: "Prozessautomatisierung",  href: "/#leistungen" },
+    { label: "Webentwicklung & Apps",   href: "/#webentwicklung" },
   ],
   Unternehmen: [
-    { label: "Über uns", href: "#ueber-uns" },
-    { label: "Team",     href: "#ueber-uns" },
-    { label: "Preise",   href: "#preise" },
-    { label: "Kontakt",  href: "#kontakt" },
+    { label: "Über uns", href: "/about" },
+    { label: "Preise",   href: "/#preise" },
+    { label: "Kontakt",  href: "/kontakt" },
   ],
   Rechtliches: [
     { label: "Impressum",   href: "/impressum" },
@@ -46,7 +45,7 @@ export default function Footer() {
 
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h4 className="font-heading text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">{category}</h4>
+              <h3 className="font-heading text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">{category}</h3>
               <ul className="space-y-2.5">
                 {links.map(link => (
                   <li key={link.label}>
@@ -64,7 +63,6 @@ export default function Footer() {
             <Link href="/impressum" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Impressum</Link>
             <Link href="/datenschutz" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Datenschutz</Link>
             <span className="text-xs text-slate-600">&#127465;&#127466; Made in Germany</span>
-            <a href="/admin" className="text-slate-900 hover:text-slate-800 transition-colors text-xs select-none" tabIndex={-1} aria-hidden="true">&bull;</a>
           </div>
         </div>
       </div>

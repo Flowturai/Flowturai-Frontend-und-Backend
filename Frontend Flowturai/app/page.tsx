@@ -1,10 +1,10 @@
 import HeroSection from "@/components/HeroSection";
 import ClaimsSlider from "@/components/ClaimsSlider";
 import ServicesSection from "@/components/ServicesSection";
+import WebPricingSection from "@/components/WebPricingSection";
 import AboutSection from "@/components/AboutSection";
 import PricingSection from "@/components/PricingSection";
 import ContactSection from "@/components/ContactSection";
-import Footer from "@/components/Footer";
 
 export default function Home() {
   return (
@@ -12,10 +12,10 @@ export default function Home() {
       <HeroSection />
       <ClaimsSlider />
       <ServicesSection />
+      <WebPricingSection />
       <AboutSection />
       <PricingSection />
       <ContactSection />
-      <Footer />
     </main>
   );
 }

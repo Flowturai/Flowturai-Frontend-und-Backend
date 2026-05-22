@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, DM_Sans } from "next/font/google";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
+import CookieBanner from "@/components/CookieBanner";
 
 const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
@@ -18,11 +20,49 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Flowturai – KI-Lösungen & Automatisierung für den Mittelstand",
+  metadataBase: new URL("https://flowturai.de"),
+  title: {
+    default: "Flowturai – KI-Lösungen & Automatisierung für KMU",
+    template: "%s | Flowturai",
+  },
   description:
-    "Flowturai berät und implementiert maßgeschneiderte KI- und Automatisierungslösungen für kleine und mittelständische Unternehmen – praxisnah, effizient und messbar.",
+    "Flowturai implementiert maßgeschneiderte KI- und Automatisierungslösungen für KMU – praxisnah, messbar und schnell umsetzbar.",
   keywords:
-    "KI-Beratung, KI-Implementierung, Automatisierung, Mittelstand, Artificial Intelligence, Deutschland",
+    "KI-Beratung, KI-Implementierung, Automatisierung, KMU, Mittelstand, Deutschland",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    locale: "de_DE",
+    url: "https://flowturai.de",
+    siteName: "Flowturai",
+    title: "Flowturai – KI-Lösungen & Automatisierung für KMU",
+    description:
+      "Flowturai implementiert maßgeschneiderte KI- und Automatisierungslösungen für KMU – praxisnah, messbar und schnell umsetzbar.",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "Flowturai – KI-Lösungen & Automatisierung für KMU",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Flowturai – KI-Lösungen & Automatisierung für KMU",
+    description:
+      "Flowturai implementiert maßgeschneiderte KI- und Automatisierungslösungen für KMU.",
+    images: ["/og-image.svg"],
+  },
+  robots: { index: true, follow: true },
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "32x32" },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -35,6 +75,8 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <Navigation />
         {children}
+        <Footer />
+        <CookieBanner />
       </body>
     </html>
   );

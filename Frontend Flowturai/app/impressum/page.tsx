@@ -2,8 +2,16 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Impressum – Flowturai",
-  description: "Impressum und rechtliche Angaben von Flowturai.",
+  title: "Impressum",
+  description:
+    "Angaben gemäß § 5 TMG: Flowturai, Jeremy Jung, Hamburg. Kontakt und rechtliche Informationen.",
+  alternates: { canonical: "/impressum" },
+  openGraph: {
+    title: "Impressum | Flowturai",
+    description:
+      "Angaben gemäß § 5 TMG: Flowturai, Jeremy Jung, Hamburg. Kontakt und rechtliche Informationen.",
+    url: "/impressum",
+  },
 };
 
 export default function Impressum() {

@@ -2,8 +2,16 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Datenschutzerklärung – Flowturai",
-  description: "Datenschutzerklärung von Flowturai gemäß DSGVO.",
+  title: "Datenschutzerklärung",
+  description:
+    "Datenschutzerklärung von Flowturai gemäß DSGVO – Verarbeitung, Speicherung und Ihre Rechte als Nutzer.",
+  alternates: { canonical: "/datenschutz" },
+  openGraph: {
+    title: "Datenschutzerklärung | Flowturai",
+    description:
+      "Datenschutzerklärung von Flowturai gemäß DSGVO – Verarbeitung, Speicherung und Ihre Rechte als Nutzer.",
+    url: "/datenschutz",
+  },
 };
 
 export default function Datenschutz() {

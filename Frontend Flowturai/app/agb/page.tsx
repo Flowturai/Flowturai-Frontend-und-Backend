@@ -2,8 +2,16 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "AGB – Flowturai",
-  description: "Allgemeine Geschäftsbedingungen von Flowturai.",
+  title: "Allgemeine Geschäftsbedingungen",
+  description:
+    "Allgemeine Geschäftsbedingungen (AGB) der Flowturai – Leistungen, Zahlungsbedingungen und Haftung.",
+  alternates: { canonical: "/agb" },
+  openGraph: {
+    title: "AGB | Flowturai",
+    description:
+      "Allgemeine Geschäftsbedingungen (AGB) der Flowturai – Leistungen, Zahlungsbedingungen und Haftung.",
+    url: "/agb",
+  },
 };
 
 export default function AGB() {

@@ -53,6 +53,16 @@ const services = [
     ),
     color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100",
   },
+  {
+    title: "Webentwicklung & Apps",
+    description: "Moderne, schnelle Websites und Web-Apps – KI-gestützt entwickelt, mit Festpreis und klaren Timelines. Von der Landing Page bis zur komplexen Plattform.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+        <circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20" />
+      </svg>
+    ),
+    color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-100",
+  },
 ];
 
 export default function ServicesSection() {

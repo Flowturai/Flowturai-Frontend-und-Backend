@@ -4,10 +4,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/neon-button";
 
 const navLinks = [
-  { label: "Leistungen", href: "#leistungen" },
-  { label: "Über uns",   href: "#ueber-uns" },
-  { label: "Preise",     href: "#preise" },
-  { label: "Kontakt",    href: "#kontakt" },
+  { label: "Leistungen",     href: "/#leistungen" },
+  { label: "Webentwicklung", href: "/#webentwicklung" },
+  { label: "Über uns",       href: "/about" },
+  { label: "Preise",         href: "/#preise" },
+  { label: "Kontakt",        href: "/kontakt" },
 ];
 
 export default function Navigation() {
@@ -65,14 +66,15 @@ export default function Navigation() {
 
           {/* CTA */}
           <div className="hidden md:flex">
-            <Button
-              variant="solid"
-              size="sm"
-              onClick={() => document.getElementById("kontakt")?.scrollIntoView({ behavior: "smooth" })}
-              className={scrolled ? "" : "border-white/20"}
-            >
-              Beratung anfragen
-            </Button>
+            <Link href="/kontakt">
+              <Button
+                variant="solid"
+                size="sm"
+                className={scrolled ? "" : "border-white/20"}
+              >
+                Beratung anfragen
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile toggle */}
@@ -111,14 +113,11 @@ export default function Navigation() {
               {link.label}
             </a>
           ))}
-          <Button
-            variant="solid"
-            size="default"
-            className="mt-4 w-full"
-            onClick={() => { setMenuOpen(false); document.getElementById("kontakt")?.scrollIntoView({ behavior: "smooth" }); }}
-          >
-            Beratung anfragen
-          </Button>
+          <Link href="/kontakt" onClick={() => setMenuOpen(false)}>
+            <Button variant="solid" size="default" className="mt-4 w-full">
+              Beratung anfragen
+            </Button>
+          </Link>
         </div>
       )}
     </nav>
